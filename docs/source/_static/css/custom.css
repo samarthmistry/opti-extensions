@@ -1,0 +1,15 @@
+/* Undo change showing scrollbar - made in ansys-sphinx-theme v1.1 onwards */
+/* https://github.com/ansys/ansys-sphinx-theme/pull/474/commits/87229cbf988616592f8055cc34f1a39f08805961 */
+.bd-sidebar-primary {
+  max-height: calc(100vh - var(--pst-header-height) - 1vh);
+  line-height: var(--ast-global-line-height);
+  border: none;
+  overflow-y: scroll;
+  overflow-x: hidden;
+}
+.bd-sidebar-secondary {
+  max-height: calc(100vh - var(--pst-header-height) - 1vh);
+  line-height: var(--ast-global-line-height);
+  border: none;
+  overflow: auto;
+}

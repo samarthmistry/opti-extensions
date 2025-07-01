@@ -1,0 +1,18 @@
+# Python
+__pycache__
+build
+dist
+*.egg-info
+
+# Test coverage
+.coverage
+
+# Sphinx docs
+docs/build
+docs/source/auto_api
+docs/source/auto_examples
+docs/source/sg_execution_times.rst
+examples/*/instances
+
+# Gurobi
+gurobi.env
