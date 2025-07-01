@@ -1,0 +1,71 @@
+name: Tests
+
+on:
+  push:
+    branches: ['**']
+    tags-ignore: ['*']
+
+jobs:
+  check_changes:
+    name: Check if changes necessitate test runs
+
+    if: ${{ ! contains(github.event.head_commit.message, 'Merge pull request') }}
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get latest commit SHA of main branch
+        run: |
+          git fetch origin main
+          MAIN_SHA=$(git rev-parse origin/main)
+          echo "main_sha=$MAIN_SHA" >> $GITHUB_ENV
+
+      - name: Check for changed python files
+        id: changed-py-files
+        uses: tj-actions/changed-files@v46
+        with:
+          base_sha: ${{ env.main_sha }}
+          files: '**/*.py'
+
+    outputs:
+      any_changed: ${{ steps.changed-py-files.outputs.any_changed }}
+
+  run_tests:
+    name: Run tests
+
+    needs: check_changes
+
+    if: needs.check_changes.outputs.any_changed == 'true'
+
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        py: ['3.10', '3.11', '3.12', '3.13']
+      fail-fast: false
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Setup python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.py }}
+          cache: 'pip'
+
+      - name: Install tox and its GitHub action plugin
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install tox "tox-gh>=1.2"
+
+      - name: Setup tox environments and run test suite
+        run: |
+          tox --notest
+          tox --skip-pkg-install

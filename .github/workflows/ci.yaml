@@ -1,0 +1,102 @@
+name: CI
+
+on:
+  pull_request:
+    branches: main
+
+concurrency:
+  group: static-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    name: Run CI pipeline
+
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Setup python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+
+      - name: Install project and dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install ".[dev, solver-apis]"
+
+      - name: Lint with Ruff
+        # Will FAIL if any unfixable lint rule is violated
+        run: ruff check --fix --show-fixes --output-format=github
+
+      - name: Format with Ruff
+        run: ruff format
+
+      - name: Check for file changes from Ruff
+        uses: tj-actions/verify-changed-files@v20
+        id: verify-ruff-change
+        with:
+          files: '**/*.py'
+
+      - name: Commit file changes from Ruff
+        if: steps.verify-ruff-change.outputs.files_changed == 'true'
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add -A
+          git commit -m "[Automated] Formatted with Ruff"
+
+      - name: Push file changes from Ruff
+        if: steps.verify-ruff-change.outputs.files_changed == 'true'
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ github.head_ref }}
+          force: true
+
+      - name: Check that docs can be built + Lint python docstrings with numpydoc (through Sphinx)
+        # Will FAIL if Sphinx throws any warnings/errors or if any numpydoc lint rule is violated
+        run: |
+            make -C docs clean html
+            rm -rf docs/source/auto_api/* docs/source/auto_examples/*
+
+      - name: Static type check with mypy
+        # Will FAIL if any error is found
+        run: mypy src
+
+      - name: Generate coverage report from unit tests
+        # Will FAIL if measured coverage is below 100%
+        run: pytest tests/unit_tests/ --no-summary --cov-fail-under 100
+
+      - name: Generate badge file from coverage report
+        uses: tj-actions/coverage-badge-py@v2
+
+      - name: Check for badge file change
+        uses: tj-actions/verify-changed-files@v20
+        id: verify-covbadge-change
+        with:
+          files: coverage.svg
+
+      - name: Commit badge file change
+        if: steps.verify-covbadge-change.outputs.files_changed == 'true'
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add coverage.svg
+          git commit -m "[Automated] Updated coverage badge"
+
+      - name: Push badge file change
+        if: steps.verify-covbadge-change.outputs.files_changed == 'true'
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ github.head_ref }}
+          force: true
