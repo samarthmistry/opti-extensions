@@ -214,12 +214,12 @@ class VarDict1D(VarDictCore[Elem1DT, VarT], Dict1DMixin[Elem1DT, VarT]):
         """
         return super().get(key, 0)
 
-    def sum(self) -> LinearExpr | ZeroExpr:
+    def sum(self) -> LinearExpr:
         """Sum all variables in a linear expression.
 
         Returns
         -------
-        docplex.mp.linear.LinearExpr or docplex.mp.linear.ZeroExpr
+        docplex.mp.linear.LinearExpr
 
         Examples
         --------
