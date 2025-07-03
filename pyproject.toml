@@ -93,7 +93,7 @@ select = ["F", "E", "W", "I", "D", "B", "UP", "FA"]
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F403", "D212"]
 "setup.py" = ["D100"]
-"examples/*" = ["E501"]
+"examples/*" = ["I001", "E501"]
 "{docs,examples}/*" = ["E402"]
 "{docs,tests,examples}/**" = ["D"]
 

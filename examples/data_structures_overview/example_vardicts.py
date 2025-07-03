@@ -11,12 +11,18 @@ are immutable subclasses of Python's dict with some additional functionality.
 
 Suppose we want build a model to solve the facility location problem. We'll define the
 variables for this problem with these data structures.
+
+.. note::
+
+    We'll be using DOcplex here, but the same approach will work for gurobipy and Xpress.
 """
 
 # %%
 
-# We'll work with DOcplex here, but the same approach applies to gurobipy and Xpress
-# To show fail cases
+# Let's import the classes defining IndexSets, and the function that adds variables based on
+# IndexSets and returns VarDicts
+from opti_extensions import IndexSet1D, IndexSetND
+from opti_extensions.docplex import add_variables
 
 # We'll also work with dataframes and series
 import pandas as pd
@@ -24,9 +30,6 @@ import pandas as pd
 # %%
 # Let's instantiate a DOcplex model
 from docplex.mp.model import Model
-
-from opti_extensions import IndexSet1D, IndexSetND
-from opti_extensions.docplex import add_variables
 
 mdl = Model()
 
