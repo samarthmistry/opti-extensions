@@ -188,7 +188,7 @@ def autodoc_override_docstring(app, what, name, obj, options, lines):
                 func = 'addVariables'
             lines[:] = [
                 f'This class is not meant to be instantiated; {obj.__name__} is built through the '
-                f'`{module}.{func}` function.',
+                f'``{module}.{func}`` function.',
             ]
 
 
