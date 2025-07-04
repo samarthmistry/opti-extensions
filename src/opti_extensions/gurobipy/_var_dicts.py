@@ -13,7 +13,8 @@ from gurobipy import LinExpr, Model, QuadExpr, Var, quicksum
 
 from .._dict_mixins import Dict1DMixin, DictNDMixin
 from .._index_sets import Elem1DT, ElemNDT, ElemT, IndexSet1D, IndexSetBase, IndexSetND
-from .._var_dict_base import VarDictBase
+from .._param_dicts import ParamDict1D, ParamDictND, ParamT
+from .._var_dict_base import VarDictBase, _validate_for_dot_1d, _validate_for_dot_Nd
 
 VarT = TypeVar('VarT', bound=Var)
 
@@ -276,6 +277,76 @@ class VarDict1D(VarDictCore[Elem1DT, VarT], Dict1DMixin[Elem1DT, VarT]):
         """
         return quicksum(v**2 for v in self.values())
 
+    def dot(self, paramdict: ParamDict1D[Elem1DT, ParamT]) -> LinExpr:
+        """Sum the products of variables with corresponding coef from ParamDict1D, in an expression.
+
+        Assumes the coef to be zero if not found in the ParamDict1D.
+
+        Equivalent to::
+
+          gp.quicksum(paramdict.get(k, 0) * v for k, v in vardict.items())
+
+        Parameters
+        ----------
+        paramdict : ParamDict1D
+            ParamDict1D to be used for dot product.
+
+        Returns
+        -------
+        gurobipy.LinExpr
+
+        Raises
+        ------
+        TypeError
+            If the paramdict is not as instance of ParamDict1D.
+
+        Notes
+        -----
+        This method is equivalent to using the matrix multiplication operator ``@``.
+
+        Both ``ParamDict1D @ VarDict1D`` and ``VarDict1D @ ParamDict1D`` will also produce the same
+        result.
+
+        Examples
+        --------
+        Create gurobipy model:
+
+        >>> from gurobipy import GRB, Model
+        >>> mdl = Model()
+
+        Create index-set:
+
+        >>> nodes = IndexSet1D(['A', 'B', 'C'], name='node')
+
+        Add variables:
+
+        >>> from opti_extensions.gurobipy import addVars
+        >>> node_select = addVars(mdl, nodes, vtype=GRB.BINARY, name='node-select')
+        >>> mdl.update()
+
+        Define parameter:
+
+        >>> from opti_extensions import ParamDict1D
+        >>> fixed_cost = ParamDict1D({'A': 100, 'B': 200})
+
+        Compute dot product (three alternative ways):
+
+        >>> node_select.dot(fixed_cost)
+        <gurobi.LinExpr: 100.0 node-select[A] + 200.0 node-select[B] + 0.0 node-select[C]>
+
+        >>> fixed_cost @ node_select
+        <gurobi.LinExpr: 100.0 node-select[A] + 200.0 node-select[B] + 0.0 node-select[C]>
+
+        >>> node_select @ fixed_cost
+        <gurobi.LinExpr: 100.0 node-select[A] + 200.0 node-select[B] + 0.0 node-select[C]>
+        """
+        _validate_for_dot_1d(paramdict)
+        return quicksum(paramdict.get(k, 0) * v for k, v in self.items())
+
+    __matmul__ = dot
+
+    __rmatmul__ = dot
+
 
 class VarDictND(VarDictCore[ElemNDT, VarT], DictNDMixin[ElemNDT, VarT]):
     """Custom subclasses of `dict` to define gurobipy model variables with N-dim tuple keys.
@@ -523,3 +594,76 @@ class VarDictND(VarDictCore[ElemNDT, VarT], DictNDMixin[ElemNDT, VarT]):
         if pattern:
             return quicksum(v**2 for v in self.subset_values(*pattern))
         return quicksum(v**2 for v in self.values())
+
+    def dot(self, paramdict: ParamDictND[ElemNDT, ParamT]) -> LinExpr:
+        """Sum the products of variables with corresponding coef from ParamDictND, in an expression.
+
+        Assumes the coef to be zero if not found in the ParamDictND.
+
+        Equivalent to::
+
+          gp.quicksum(paramdict.get(k, 0) * v for k, v in vardict.items())
+
+        Parameters
+        ----------
+        paramdict : ParamDictND
+            ParamDictND to be used for dot product; should have tuple keys of same length as
+            VarDictND.
+
+        Returns
+        -------
+        gurobipy.LinExpr
+
+        Raises
+        ------
+        TypeError
+            If the paramdict is not as instance of ParamDictND.
+        ValueError
+            If the paramdict does not have tuple keys of same length as VarDictND.
+
+        Notes
+        -----
+        This method is equivalent to using the matrix multiplication operator ``@``.
+
+        Both ``ParamDictND @ VarDictND`` and ``VarDictND @ ParamDictND`` will also produce the same
+        result.
+
+        Examples
+        --------
+        Create gurobipy model:
+
+        >>> from gurobipy import GRB, Model
+        >>> mdl = Model()
+
+        Create index-set:
+
+        >>> arcs = IndexSetND([('A', 'B'), ('B', 'C'), ('C', 'B')], names=['ori', 'des'])
+
+        Add variables:
+
+        >>> from opti_extensions.gurobipy import addVars
+        >>> arc_flow = addVars(mdl, arcs, ub=10, vtype=GRB.CONTINUOUS, name='arc-flow')
+        >>> mdl.update()
+
+        Define parameter:
+
+        >>> from opti_extensions import ParamDictND
+        >>> cost = ParamDictND({('A', 'B'): 10, ('B', 'C'): 20})
+
+        Compute dot product (three alternative ways):
+
+        >>> arc_flow.dot(cost)
+        <gurobi.LinExpr: 10.0 arc-flow[A,B] + 20.0 arc-flow[B,C] + 0.0 arc-flow[C,B]>
+
+        >>> cost @ arc_flow
+        <gurobi.LinExpr: 10.0 arc-flow[A,B] + 20.0 arc-flow[B,C] + 0.0 arc-flow[C,B]>
+
+        >>> arc_flow @ cost
+        <gurobi.LinExpr: 10.0 arc-flow[A,B] + 20.0 arc-flow[B,C] + 0.0 arc-flow[C,B]>
+        """
+        _validate_for_dot_Nd(self._indexset, paramdict)
+        return quicksum(paramdict.get(k, 0) * v for k, v in self.items())
+
+    __matmul__ = dot
+
+    __rmatmul__ = dot

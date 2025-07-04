@@ -40,6 +40,14 @@ Numerical operations
 
    VarDict1D.sum
    VarDict1D.sum_squares
+   VarDict1D.dot
+
+The ``@`` operator
+------------------
+
+The matrix multiplication operator ``@`` can be used instead of the `dot`
+method. Both ``ParamDict1D @ VarDict1D`` and ``VarDict1D @ ParamDict1D``
+will produce the same result as ``VarDict1D.dot(ParamDict1D)``.
 
 Mapping operations
 ------------------
@@ -80,6 +88,14 @@ Numerical operations
 
    VarDictND.sum
    VarDictND.sum_squares
+   VarDictND.dot
+
+The ``@`` operator
+------------------
+
+The matrix multiplication operator ``@`` can be used instead of the `dot`
+method. Both ``ParamDictND @ VarDictND`` and ``VarDictND @ ParamDictND``
+will produce the same result as ``VarDictND.dot(ParamDictND)``.
 
 Mapping operations
 ------------------

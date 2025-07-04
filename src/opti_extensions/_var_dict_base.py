@@ -9,10 +9,57 @@ from __future__ import annotations
 from typing import Any, NoReturn, TypeVar, overload
 
 from ._dict_mixins import DefaultT, DictBaseMixin
-from ._index_sets import ElemT, IndexSetBase
+from ._index_sets import Elem1DT, ElemNDT, ElemT, IndexSetBase, IndexSetND
+from ._param_dicts import ParamDict1D, ParamDictND, ParamT
 
 VarT = TypeVar('VarT')
 ModelT = TypeVar('ModelT')
+
+
+def _validate_for_dot_1d(paramdict: ParamDict1D[Elem1DT, ParamT]) -> None:
+    """Validate ParamDict for dot product with VarDict1D.
+
+    Parameters
+    ----------
+    paramdict : ParamDict1D
+        ParamDict1D to be used for dot product.
+
+    Raises
+    ------
+    TypeError
+        If the paramdict is not as instance of ParamDict1D.
+    """
+    if not isinstance(paramdict, ParamDict1D):
+        raise TypeError('Dot product only allowed with ParamDict1D')
+
+
+def _validate_for_dot_Nd(
+    indexset: IndexSetND[ElemNDT], paramdict: ParamDictND[ElemNDT, ParamT]
+) -> None:
+    """Validate ParamDict for dot product with VarDictND.
+
+    Parameters
+    ----------
+    indexset : IndexSetND
+        Index-set of keys of VarDictND.
+    paramdict : ParamDictND
+        ParamDictND to be used for dot product.
+
+    Raises
+    ------
+    TypeError
+        If the paramdict is not as instance of ParamDictND.
+    ValueError
+        If the paramdict does not have tuple keys of same length as VarDictND.
+    """
+    if not isinstance(paramdict, ParamDictND):
+        raise TypeError(
+            'Dot product only allowed with ParamDictND (having tuple keys of same length as '
+            'VarDictND)'
+        )
+    else:
+        if paramdict._indexset._tuplelen != indexset._tuplelen:
+            raise ValueError('ParamDictND should have tuple keys of same length as VarDictND')
 
 
 class VarDictBase(dict[ElemT, VarT], DictBaseMixin[ElemT, VarT]):

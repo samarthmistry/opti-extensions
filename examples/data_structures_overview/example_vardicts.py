@@ -126,7 +126,41 @@ print({j: select_fac.lookup(j) for j in ('F1', 'F2', 'F99')})
 # ^^^^^^^^^^^^^^^^^^^^
 
 # %%
-# It has special methods to directly sum all variables and sum squares of all variables.
+# It has special methods for numerical operations: `sum`, `sum_squares`, and `dot` / ``@`` operator.
+
+# %%
+# `dot` method / ``@`` operator
+# """""""""""""""""""""""""""""
+
+# %%
+# To sum the products of variables with corresponding coef from ParamDict1D. Assumes the coef to be
+# zero if not found in the ParamDict1D.
+
+# %%
+
+# Define COST parameter
+from opti_extensions import ParamDict1D
+
+FIXED_COST = ParamDict1D(
+    {'F1': 10000, 'F2': 20000},
+    #   does NOT include: 'F3' ^^^^
+)
+
+# Compute dot product of COST parameter with dem_alloc variables
+print(select_fac.dot(FIXED_COST))
+
+# %%
+
+# Alternative syntax with the `@` operator
+print(FIXED_COST @ select_fac)
+print(select_fac @ FIXED_COST)
+
+# %%
+# `sum` & `sum_squares` methods
+# """""""""""""""""""""""""""""
+
+# %%
+# To directly sum all or a subset of variables, and sum squares of all or a subset of variables.
 
 # %%
 print(select_fac.sum())
@@ -259,8 +293,41 @@ print('With if check:', [val for elem, val in dem_alloc.items() if elem[1] == 1]
 # ^^^^^^^^^^^^^^^^^^^^
 
 # %%
-# It has special methods to directly sum all (or a subset of) variables and sum squares of all (or a
-# subset of) variables
+# It has special methods for numerical operations: `sum`, `sum_squares`, and `dot` / ``@`` operator.
+
+# %%
+# `dot` method / ``@`` operator
+# """""""""""""""""""""""""""""
+
+# %%
+# To sum the products of variables with corresponding coef from ParamDictND. Assumes the coef to be
+# zero if not found in the ParamDictND.
+
+# %%
+
+# Define COST parameter
+from opti_extensions import ParamDictND
+
+COST = ParamDictND(
+    {('F1', 1): 197, ('F1', 2): 345, ('F2', 1): 99, ('F2', 2): 270, ('F3', 1): 205},
+    #                                                   does NOT include: ('F3', 2) ^^^^
+)
+
+# Compute dot product of COST parameter with dem_alloc variables
+print(dem_alloc.dot(COST))
+
+# %%
+
+# Alternative syntax with the `@` operator
+print(COST @ dem_alloc)
+print(dem_alloc @ COST)
+
+# %%
+# `sum` & `sum_squares` methods
+# """""""""""""""""""""""""""""
+
+# %%
+# To directly sum all or a subset of variables, and sum squares of all or a subset of variables.
 
 # %%
 

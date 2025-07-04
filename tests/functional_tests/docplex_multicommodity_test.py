@@ -140,10 +140,7 @@ def test_multicommodity():
     ##### Set objective
 
     # Minimize the total shipping cost
-    model.minimize(
-        model.sum(vcost[i, j, p] * trans[i, j, p] for i in ORIG for j in DEST for p in PROD)
-        + model.sum(fcost[i, j] * use[i, j] for i in ORIG for j in DEST)
-    )
+    model.minimize(vcost @ trans + fcost @ use)
 
     ##### Add constraints
 
