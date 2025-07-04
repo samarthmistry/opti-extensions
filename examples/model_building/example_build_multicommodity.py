@@ -208,52 +208,67 @@ from opti_extensions.docplex import add_variables, solve
 model = Model(name='multicommodity')
 
 # Add variables
-# Use `add_variables` from opti-extensions instead of `model.continuous_var_dict`
-# & `model.binary_var_dict`
 trans = add_variables(
     model,
     indexset=IndexSetND(ORIG, DEST, PROD, names=('ORIG', 'DEST', 'PROD')),
     vartype='continuous',
     name='NUM-UNITS',
 )
+# Instead of:
+# trans = model.continuous_var_dict(
+#     [(i, j, p) for i in ORIG for j in DEST for p in PROD],
+#     name='NUM-UNITS',
+# )
 use = add_variables(
     model,
     indexset=IndexSetND(ORIG, DEST, names=('ORIG', 'DEST')),
     vartype='binary',
     name='USE-ROUTE',
 )
+# Instead of:
+# use = model.binary_var_dict(
+#     [(i, j) for i in ORIG for j in DEST],
+#     name='USE-ROUTE',
+# )
 
 # Set objective
 model.minimize(
     vcost @ trans + fcost @ use
+    # Instead of:
+    # model.sum(
+    #     vcost[i, j, p] * trans[i, j, p]
+    #     for i in ORIG for j in DEST for p in PROD
+    # )
+    # + model.sum(
+    #     fcost[i, j] * use[i, j]
+    #     for i in ORIG for j in DEST
+    # )
 )
 
 # Add constraints
 model.add_constraints_(
-    (
-        trans.sum(i, '*', p) == supply[i, p],
-        f'supply_{i}_{p}',
-    )
+    trans.sum(i, '*', p) == supply[i, p]
+    # Instead of:
+    # model.sum(trans[i, j, p] for j in DEST) == supply[i, p]
     for i in ORIG for p in PROD
 )
 model.add_constraints_(
-    (
-        trans.sum('*', j, p) == demand[j, p],
-        f'demand_{j}_{p}',
-    )
+    trans.sum('*', j, p) == demand[j, p]
+    # Instead of:
+    # model.sum(trans[i, j, p] for i in ORIG) == demand[j, p]
     for j in DEST for p in PROD
 )
 model.add_constraints_(
-    (
-        trans.sum(i, j, '*') <= limit * use[i,j],
-        f'multi_{i}_{j}',
-    )
+    trans.sum(i, j, '*') <= limit * use[i, j]
+    # Instead of:
+    # model.sum(trans[i, j, p] for p in PROD) <= limit * use[i,j]
     for i in ORIG for j in DEST
 )
 
 # Solve with additional logging output for problem and solution statistics
-# Use `solve` from opti-extensions instead of `model.solve`
 sol = solve(model, log_output=True)
+# Instead of:
+# sol = model.solve(log_output=True)
 
 # %%
 sol.display(print_zeros=False)
@@ -270,47 +285,67 @@ from opti_extensions.gurobipy import addVars
 model = Model(name='multicommodity')
 
 # Add variables
-# Use `addVars` from opti-extensions instead of `model.addVars`
 trans = addVars(
     model,
     IndexSetND(ORIG, DEST, PROD, names=('ORIG', 'DEST', 'PROD')),
     vtype=GRB.CONTINUOUS,
     name='NUM-UNITS',
 )
+# Instead of:
+# trans = model.addVars(
+#     ORIG,
+#     DEST,
+#     PROD,
+#     vtype=GRB.CONTINUOUS,
+#     name='NUM-UNITS',
+# )
 use = addVars(
     model,
     IndexSetND(ORIG, DEST, names=('ORIG', 'DEST')),
     vtype=GRB.BINARY,
     name='USE-ROUTE',
 )
+# Instead of:
+# use = model.addVars(
+#     ORIG,
+#     DEST,
+#     vtype=GRB.BINARY,
+#     name='USE-ROUTE',
+# )
 
 # Set objective
 model.setObjective(
     vcost @ trans + fcost @ use,
+    # Instead of:
+    # quicksum(
+    #     vcost[i, j, p] * trans[i, j, p]
+    #     for i in ORIG for j in DEST for p in PROD
+    # )
+    # + quicksum(
+    #     fcost[i, j] * use[i, j]
+    #     for i in ORIG for j in DEST
+    # )
     sense=GRB.MINIMIZE,
 )
 
 # Add constraints
 model.addConstrs(
-    (
-        trans.sum(i, '*', p) == supply[i, p]
-        for i in ORIG for p in PROD
-    ),
-    name='supply',
+    trans.sum(i, '*', p) == supply[i, p]
+    # Instead of:
+    # quicksum(trans[i, j, p] for j in DEST) == supply[i, p]
+    for i in ORIG for p in PROD
 )
 model.addConstrs(
-    (
-        trans.sum('*', j, p) == demand[j, p]
-        for j in DEST for p in PROD
-    ),
-    name='demand',
+    trans.sum('*', j, p) == demand[j, p]
+    # Instead of:
+    # quicksum(trans[i, j, p] for i in ORIG) == demand[j, p]
+    for j in DEST for p in PROD
 )
 model.addConstrs(
-    (
-        trans.sum(i, j, '*') <= limit * use[i, j]
-        for i in ORIG for j in DEST
-    ),
-    name='multi',
+    trans.sum(i, j, '*') <= limit * use[i, j]
+    # Instead of:
+    # quicksum(trans[i, j, p] for p in PROD) <= limit * use[i,j]
+    for i in ORIG for j in DEST
 )
 
 # Solve
@@ -331,37 +366,63 @@ from opti_extensions.xpress import addVariables
 prob = xp.problem(name='multicommodity')
 
 # Add variables
-# Use `addVariables` from opti-extensions instead of `prob.addVariables`
 trans = addVariables(
     prob,
     IndexSetND(ORIG, DEST, PROD, names=('ORIG', 'DEST', 'PROD')),
     vartype=xp.continuous,
     name='NUM-UNITS',
 )
+# Instead of:
+# trans = prob.addVariables(
+#     [(i, j, p) for i in ORIG for j in DEST for p in PROD],
+#     vartype=xp.continuous,
+#     name='NUM-UNITS',
+# )
 use = addVariables(
     prob,
     IndexSetND(ORIG, DEST, names=('ORIG', 'DEST')),
     vartype=xp.binary,
     name='USE-ROUTE',
 )
+# Instead of:
+# use = prob.addVariables(
+#     [(i, j) for i in ORIG for j in DEST],
+#     vartype=xp.binary,
+#     name='USE-ROUTE',
+# )
 
 # Set objective
 prob.setObjective(
     vcost @ trans + fcost @ use,
+    # Instead of:
+    # xp.Sum(
+    #     vcost[i, j, p] * trans[i, j, p]
+    #     for i in ORIG for j in DEST for p in PROD
+    # )
+    # + xp.Sum(
+    #     fcost[i, j] * use[i, j]
+    #     for i in ORIG for j in DEST
+    # )
     sense=xp.minimize,
 )
 
 # Add constraints
 prob.addConstraint(
     trans.sum(i, '*', p) == supply[i, p]
+    # Instead of:
+    # xp.Sum(trans[i, j, p] for j in DEST) == supply[i, p]
     for i in ORIG for p in PROD
 )
 prob.addConstraint(
     trans.sum('*', j, p) == demand[j, p]
+    # Instead of:
+    # xp.Sum(trans[i, j, p] for i in ORIG) == demand[j, p]
     for j in DEST for p in PROD
 )
 prob.addConstraint(
     trans.sum(i, j, '*') <= limit * use[i, j]
+    # Instead of:
+    # xp.Sum(trans[i, j, p] for p in PROD) <= limit * use[i,j]
     for i in ORIG for j in DEST
 )
 
