@@ -217,7 +217,7 @@ class VarDict1D(VarDictCore[Elem1DT, VarT], Dict1DMixin[Elem1DT, VarT]):
         return super().get(key, 0)
 
     def sum(self) -> xp.expression:
-        """Sum all variables in a linear expression.
+        """Sum all variables in an expression.
 
         Returns
         -------
@@ -248,6 +248,39 @@ class VarDict1D(VarDictCore[Elem1DT, VarT], Dict1DMixin[Elem1DT, VarT]):
         node-select(A) + node-select(B) + node-select(C)
         """
         return xp.Sum(self)
+
+    def sum_squares(self) -> xp.expression:
+        """Sum squares of all variables in an expression.
+
+        Returns
+        -------
+        xpress.expression
+
+        Examples
+        --------
+        Create xpress problem:
+
+        >>> import xpress as xp
+        >>> import warnings
+        >>> warnings.filterwarnings('ignore', category=xp.LicenseWarning)
+
+        >>> prob = xp.problem()
+
+        Create index-set:
+
+        >>> nodes = IndexSet1D(['A', 'B', 'C'], name='node')
+
+        Add variables:
+
+        >>> from opti_extensions.xpress import addVariables
+        >>> node_select = addVariables(prob, nodes, name='node-select', vartype=xp.binary)
+
+        Sum squares of all variables:
+
+        >>> node_select.sum_squares()
+        node-select(A) ** 2 + node-select(B) ** 2 + node-select(C) ** 2
+        """
+        return xp.Sum(v**2 for v in self.values())
 
 
 class VarDictND(VarDictCore[ElemNDT, VarT], DictNDMixin[ElemNDT, VarT]):
@@ -380,7 +413,7 @@ class VarDictND(VarDictCore[ElemNDT, VarT], DictNDMixin[ElemNDT, VarT]):
         return super().get(cast('ElemNDT', key), 0)
 
     def sum(self, *pattern: Any) -> xp.expression:
-        """Sum all variables, or a subset based on wildcard pattern, in a linear expression.
+        """Sum all variables, or a subset based on wildcard pattern, in an expression.
 
         Parameters
         ----------
@@ -438,5 +471,65 @@ class VarDictND(VarDictCore[ElemNDT, VarT], DictNDMixin[ElemNDT, VarT]):
         """
         if pattern:
             return xp.Sum(self.subset_values(*pattern))
-
         return xp.Sum(self)
+
+    def sum_squares(self, *pattern: Any) -> xp.expression:
+        """Sum squares of all variables, or a subset based on wildcard pattern, in an expression.
+
+        Parameters
+        ----------
+        *pattern : Any, optional
+            For subsets, the pattern requires one value for each dimension of the N-dim tuple key.
+            The single-character string ``'*'`` (asterisk) can be used as a wildcard to represent
+            all possible values for a dimension.
+
+        Returns
+        -------
+        xpress.expression
+
+        Raises
+        ------
+        TypeError
+            If the pattern includes non-scalar(s).
+        ValueError
+            If the pattern is not the same as the length of N-dim tuple keys.
+        ValueError
+            If the pattern has no wildcard or all wildcards.
+
+        Examples
+        --------
+        Create xpress problem:
+
+        >>> import xpress as xp
+        >>> import warnings
+        >>> warnings.filterwarnings('ignore', category=xp.LicenseWarning)
+
+        >>> prob = xp.problem()
+
+        Create index-set:
+
+        >>> arcs = IndexSetND([('A', 'B'), ('B', 'C'), ('C', 'B')], names=['ori', 'des'])
+
+        Add variables:
+
+        >>> from opti_extensions.xpress import addVariables
+        >>> arc_flow = addVariables(prob, arcs, name='arc-flow', ub=10, vartype=xp.continuous)
+
+        Sum squares of all variables:
+
+        >>> arc_flow.sum_squares()
+        arc-flow(('A', 'B')) ** 2 + arc-flow(('B', 'C')) ** 2 + arc-flow(('C', 'B')) ** 2
+
+        Sum squares of subset of variables having ``'B'`` at the second dimension index:
+
+        >>> arc_flow.sum_squares('*', 'B')
+        arc-flow(('A', 'B')) ** 2 + arc-flow(('C', 'B')) ** 2
+
+        Sum squares of subset of variables having ``'Z'`` at the first dimension index:
+
+        >>> arc_flow.sum_squares('Z', '*')
+        0
+        """
+        if pattern:
+            return xp.Sum(v**2 for v in self.subset_values(*pattern))
+        return xp.Sum(v**2 for v in self.values())

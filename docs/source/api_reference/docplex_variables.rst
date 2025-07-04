@@ -40,6 +40,7 @@ Numerical operations
 .. autosummary::
 
    VarDict1D.sum
+   VarDict1D.sum_squares
 
 Mapping operations
 ------------------
@@ -79,6 +80,7 @@ Numerical operations
 .. autosummary::
 
    VarDictND.sum
+   VarDictND.sum_squares
 
 Mapping operations
 ------------------

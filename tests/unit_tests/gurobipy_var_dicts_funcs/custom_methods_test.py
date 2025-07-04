@@ -69,6 +69,7 @@ def test_vardict_sum_pass(mdl, indexset):
     v = addVars(mdl, indexset, vtype=GRB.CONTINUOUS, name='VAL')
     mdl.update()
     assert str(v.sum()) == str(quicksum(x for x in v.values()))
+    assert str(v.sum_squares()) == str(quicksum(x**2 for x in v.values()))
 
 
 @pytest.mark.parametrize(
@@ -93,6 +94,9 @@ def test_vardictNd_sum_partial_pass(mdl, indexset, pattern):
     assert str(v.sum(*pattern)) == str(
         quicksum(var for idx, var in v.items() if _match(idx, pattern))
     )
+    assert str(v.sum_squares(*pattern)) == str(
+        quicksum(var**2 for idx, var in v.items() if _match(idx, pattern))
+    )
 
 
 @pytest.mark.parametrize(
@@ -107,3 +111,5 @@ def test_vardictNd_sum_partial_valerr(mdl, indexset, pattern):
     v = addVars(mdl, indexset, vtype=GRB.CONTINUOUS, name='VAL')
     with pytest.raises(ValueError):
         v.sum(*pattern)
+    with pytest.raises(ValueError):
+        v.sum_squares(*pattern)

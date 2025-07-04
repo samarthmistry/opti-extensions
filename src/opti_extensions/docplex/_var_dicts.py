@@ -12,6 +12,7 @@ from typing import Any, Literal, TypeVar, cast
 from docplex.mp.dvar import Var
 from docplex.mp.linear import LinearExpr, ZeroExpr
 from docplex.mp.model import Model
+from docplex.mp.quad import QuadExpr
 from docplex.mp.vartype import VarType
 
 from .._dict_mixins import Dict1DMixin, DictNDMixin
@@ -215,7 +216,7 @@ class VarDict1D(VarDictCore[Elem1DT, VarT], Dict1DMixin[Elem1DT, VarT]):
         return super().get(key, 0)
 
     def sum(self) -> LinearExpr:
-        """Sum all variables in a linear expression.
+        """Sum all variables in an expression.
 
         Returns
         -------
@@ -243,6 +244,36 @@ class VarDict1D(VarDictCore[Elem1DT, VarT], Dict1DMixin[Elem1DT, VarT]):
         docplex.mp.LinearExpr(node-select_A+node-select_B+node-select_C)
         """
         return self.model.sum_vars_all_different(self.values())
+
+    def sum_squares(self) -> QuadExpr:
+        """Sum squares of all variables in an expression.
+
+        Returns
+        -------
+        docplex.mp.quad.QuadExpr
+
+        Examples
+        --------
+        Create DOcplex model:
+
+        >>> from docplex.mp.model import Model
+        >>> mdl = Model()
+
+        Create index-set:
+
+        >>> nodes = IndexSet1D(['A', 'B', 'C'], name='node')
+
+        Add variables:
+
+        >>> from opti_extensions.docplex import add_variables
+        >>> node_select = add_variables(mdl, nodes, 'B', name='node-select')
+
+        Sum squares of all variables:
+
+        >>> node_select.sum_squares()
+        docplex.mp.quad.QuadExpr(node-select_A^2+node-select_B^2+node-select_C^2)
+        """
+        return self.model.sumsq(self.values())
 
 
 class VarDictND(VarDictCore[ElemNDT, VarT], DictNDMixin[ElemNDT, VarT]):
@@ -371,7 +402,7 @@ class VarDictND(VarDictCore[ElemNDT, VarT], DictNDMixin[ElemNDT, VarT]):
         return super().get(cast('ElemNDT', key), 0)
 
     def sum(self, *pattern: Any) -> LinearExpr | ZeroExpr:
-        """Sum all variables, or a subset based on wildcard pattern, in a linear expression.
+        """Sum all variables, or a subset based on wildcard pattern, in an expression.
 
         Parameters
         ----------
@@ -427,3 +458,61 @@ class VarDictND(VarDictCore[ElemNDT, VarT], DictNDMixin[ElemNDT, VarT]):
         if pattern:
             return self.model.sum_vars_all_different(self.subset_values(*pattern))
         return self.model.sum_vars_all_different(self.values())
+
+    def sum_squares(self, *pattern: Any) -> QuadExpr | ZeroExpr:
+        """Sum squares of all variables, or a subset based on wildcard pattern, in an expression.
+
+        Parameters
+        ----------
+        *pattern : Any, optional
+            For subsets, the pattern requires one value for each dimension of the N-dim tuple key.
+            The single-character string ``'*'`` (asterisk) can be used as a wildcard to represent
+            all possible values for a dimension.
+
+        Returns
+        -------
+        docplex.mp.quad.QuadExpr or docplex.mp.linear.ZeroExpr
+
+        Raises
+        ------
+        TypeError
+            If the pattern includes non-scalar(s).
+        ValueError
+            If the pattern is not the same as the length of N-dim tuple keys.
+        ValueError
+            If the pattern has no wildcard or all wildcards.
+
+        Examples
+        --------
+        Create DOcplex model:
+
+        >>> from docplex.mp.model import Model
+        >>> mdl = Model()
+
+        Create index-set:
+
+        >>> arcs = IndexSetND([('A', 'B'), ('B', 'C'), ('C', 'B')], names=['ori', 'des'])
+
+        Add variables:
+
+        >>> from opti_extensions.docplex import add_variables
+        >>> arc_flow = add_variables(mdl, arcs, 'C', ub=10, name='arc-flow')
+
+        Sum squares of all variables:
+
+        >>> arc_flow.sum_squares()
+        docplex.mp.quad.QuadExpr(arc-flow_A_B^2+arc-flow_B_C^2+arc-flow_C_B^2)
+
+        Sum squares of subset of variables having ``'B'`` at the second dimension index:
+
+        >>> arc_flow.sum_squares('*', 'B')
+        docplex.mp.quad.QuadExpr(arc-flow_A_B^2+arc-flow_C_B^2)
+
+        Sum squares of subset of variables having ``'Z'`` at the first dimension index:
+
+        >>> arc_flow.sum_squares('Z', '*')
+        docplex.mp.ZeroExpr()
+        """
+        if pattern:
+            return self.model.sumsq(self.subset_values(*pattern))
+        return self.model.sumsq(self.values())

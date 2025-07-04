@@ -66,7 +66,8 @@ def test_vardictNd_lookup_valerr(mdl, key):
 )
 def test_vardict_sum_pass(mdl, indexset):
     v = add_variables(mdl, indexset, 'C', name='VAL')
-    assert v.sum().to_string() == mdl.sum(x for x in v.values()).to_string()
+    assert v.sum().to_string() == mdl.sum(v.values()).to_string()
+    assert v.sum_squares().to_string() == mdl.sumsq(v.values()).to_string()
 
 
 @pytest.mark.parametrize(
@@ -91,6 +92,10 @@ def test_vardictNd_sum_partial_pass(mdl, indexset, pattern):
         v.sum(*pattern).to_string()
         == mdl.sum(var for idx, var in v.items() if _match(idx, pattern)).to_string()
     )
+    assert (
+        v.sum_squares(*pattern).to_string()
+        == mdl.sumsq(var for idx, var in v.items() if _match(idx, pattern)).to_string()
+    )
 
 
 @pytest.mark.parametrize(
@@ -105,3 +110,5 @@ def test_vardictNd_sum_partial_valerr(mdl, indexset, pattern):
     v = add_variables(mdl, indexset, 'C', name='VAL')
     with pytest.raises(ValueError):
         v.sum(*pattern)
+    with pytest.raises(ValueError):
+        v.sum_squares(*pattern)

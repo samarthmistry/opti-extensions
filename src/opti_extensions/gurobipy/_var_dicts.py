@@ -9,7 +9,7 @@ from __future__ import annotations
 from collections.abc import Iterable
 from typing import Any, Literal, TypeVar, cast
 
-from gurobipy import LinExpr, Model, Var, quicksum
+from gurobipy import LinExpr, Model, QuadExpr, Var, quicksum
 
 from .._dict_mixins import Dict1DMixin, DictNDMixin
 from .._index_sets import Elem1DT, ElemNDT, ElemT, IndexSet1D, IndexSetBase, IndexSetND
@@ -215,7 +215,7 @@ class VarDict1D(VarDictCore[Elem1DT, VarT], Dict1DMixin[Elem1DT, VarT]):
         return super().get(key, 0)
 
     def sum(self) -> LinExpr:
-        """Sum all variables in a linear expression.
+        """Sum all variables in an expression.
 
         Returns
         -------
@@ -244,6 +244,37 @@ class VarDict1D(VarDictCore[Elem1DT, VarT], Dict1DMixin[Elem1DT, VarT]):
         <gurobi.LinExpr: node-select[A] + node-select[B] + node-select[C]>
         """
         return quicksum(self.values())
+
+    def sum_squares(self) -> QuadExpr:
+        """Sum squares of variables in an expression.
+
+        Returns
+        -------
+        gurobipy.QuadExpr
+
+        Examples
+        --------
+        Create gurobipy model:
+
+        >>> from gurobipy import GRB, Model
+        >>> mdl = Model()
+
+        Create index-set:
+
+        >>> nodes = IndexSet1D(['A', 'B', 'C'], name='node')
+
+        Add variables:
+
+        >>> from opti_extensions.gurobipy import addVars
+        >>> node_select = addVars(mdl, nodes, vtype=GRB.BINARY, name='node-select')
+        >>> mdl.update()
+
+        Sum squares of all variables:
+
+        >>> node_select.sum_squares()
+        <gurobi.QuadExpr: 0.0 + [ node-select[A] ^ 2 + node-select[B] ^ 2 + node-select[C] ^ 2 ]>
+        """
+        return quicksum(v**2 for v in self.values())
 
 
 class VarDictND(VarDictCore[ElemNDT, VarT], DictNDMixin[ElemNDT, VarT]):
@@ -374,7 +405,7 @@ class VarDictND(VarDictCore[ElemNDT, VarT], DictNDMixin[ElemNDT, VarT]):
         return super().get(cast('ElemNDT', key), 0)
 
     def sum(self, *pattern: Any) -> LinExpr:
-        """Sum all variables, or a subset based on wildcard pattern, in a linear expression.
+        """Sum all variables, or a subset based on wildcard pattern, in an expression.
 
         Parameters
         ----------
@@ -433,3 +464,62 @@ class VarDictND(VarDictCore[ElemNDT, VarT], DictNDMixin[ElemNDT, VarT]):
 
         res: LinExpr = quicksum(self.values())
         return res
+
+    def sum_squares(self, *pattern: Any) -> QuadExpr | LinExpr:
+        """Sum squares of variables, or a subset based on wildcard pattern, in an expression.
+
+        Parameters
+        ----------
+        *pattern : Any, optional
+            For subsets, the pattern requires one value for each dimension of the N-dim tuple key.
+            The single-character string ``'*'`` (asterisk) can be used as a wildcard to represent
+            all possible values for a dimension.
+
+        Returns
+        -------
+        gurobipy.QuadExpr
+
+        Raises
+        ------
+        TypeError
+            If the pattern includes non-scalar(s).
+        ValueError
+            If the pattern is not the same as the length of N-dim tuple keys.
+        ValueError
+            If the pattern has no wildcard or all wildcards.
+
+        Examples
+        --------
+        Create gurobipy model:
+
+        >>> from gurobipy import GRB, Model
+        >>> mdl = Model()
+
+        Create index-set:
+
+        >>> arcs = IndexSetND([('A', 'B'), ('B', 'C'), ('C', 'B')], names=['ori', 'des'])
+
+        Add variables:
+
+        >>> from opti_extensions.gurobipy import addVars
+        >>> arc_flow = addVars(mdl, arcs, ub=10, vtype=GRB.CONTINUOUS, name='arc-flow')
+        >>> mdl.update()
+
+        Sum squares of all variables:
+
+        >>> arc_flow.sum_squares()
+        <gurobi.QuadExpr: 0.0 + [ arc-flow[A,B] ^ 2 + arc-flow[B,C] ^ 2 + arc-flow[C,B] ^ 2 ]>
+
+        Sum squares of subset of variables having ``'B'`` at the second dimension index:
+
+        >>> arc_flow.sum_squares('*', 'B')
+        <gurobi.QuadExpr: 0.0 + [ arc-flow[A,B] ^ 2 + arc-flow[C,B] ^ 2 ]>
+
+        Sum squares of subset of variables having ``'Z'`` at the first dimension index:
+
+        >>> arc_flow.sum_squares('Z', '*')
+        <gurobi.LinExpr: 0.0>
+        """
+        if pattern:
+            return quicksum(v**2 for v in self.subset_values(*pattern))
+        return quicksum(v**2 for v in self.values())

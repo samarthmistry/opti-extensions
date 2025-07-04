@@ -68,6 +68,7 @@ def test_vardictNd_lookup_valerr(prob, key):
 def test_vardict_sum_pass(prob, indexset):
     v = addVariables(prob, indexset, vartype=xp.continuous, name='')
     assert str(v.sum()) == str(xp.Sum(x for x in v.values()))
+    assert str(v.sum_squares()) == str(xp.Sum(x**2 for x in v.values()))
 
 
 @pytest.mark.parametrize(
@@ -91,6 +92,9 @@ def test_vardictNd_sum_partial_pass(prob, indexset, pattern):
     assert str(v.sum(*pattern)) == str(
         xp.Sum(var for idx, var in v.items() if _match(idx, pattern))
     )
+    assert str(v.sum_squares(*pattern)) == str(
+        xp.Sum(var**2 for idx, var in v.items() if _match(idx, pattern))
+    )
 
 
 @pytest.mark.parametrize(
@@ -105,3 +109,5 @@ def test_vardictNd_sum_partial_valerr(prob, indexset, pattern):
     v = addVariables(prob, indexset, vartype=xp.continuous, name='')
     with pytest.raises(ValueError):
         v.sum(*pattern)
+    with pytest.raises(ValueError):
+        v.sum_squares(*pattern)

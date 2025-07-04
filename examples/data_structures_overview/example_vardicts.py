@@ -126,10 +126,11 @@ print({j: select_fac.lookup(j) for j in ('F1', 'F2', 'F99')})
 # ^^^^^^^^^^^^^^^^^^^^
 
 # %%
-# It has a special method for directly summing up variables.
+# It has special methods to directly sum all variables and sum squares of all variables.
 
 # %%
 print(select_fac.sum())
+print(select_fac.sum_squares())
 
 # %%
 # VarDictND
@@ -258,18 +259,30 @@ print('With if check:', [val for elem, val in dem_alloc.items() if elem[1] == 1]
 # ^^^^^^^^^^^^^^^^^^^^
 
 # %%
-# It has a special method for directly summing up all or a subset of variables.
+# It has special methods to directly sum all (or a subset of) variables and sum squares of all (or a
+# subset of) variables
 
 # %%
 
-# Sum all variables of dem_alloc
+# Sum all dem_alloc variables
 print(dem_alloc.sum())
 
 # %%
 
-# Sum over a subset of variables, that have the value 'F1' in the first dimension and any value in
-# the second dimension of dem_alloc, based on wildcard pattern
+# Sum a subset of dem_alloc variables, that have the value 'F1' in the first dimension and any value in
+# the second dimension, based on wildcard pattern
 print(dem_alloc.sum('F1', '*'))
+
+# %%
+
+# Sum squares of all dem_alloc variables
+print(dem_alloc.sum_squares())
+
+# %%
+
+# Sum squares of a subset of dem_alloc variables, that have the value 'F1' in the first dimension and any
+# value in the second dimension, based on wildcard pattern
+print(dem_alloc.sum_squares('F1', '*'))
 
 # %%
 # Not only does it provide a cleaner syntax, but it is also very performant because of an internal
