@@ -225,14 +225,7 @@ use = add_variables(
 
 # Set objective
 model.minimize(
-    model.sum(
-        vcost[i, j, p] * trans[i, j, p]
-        for i in ORIG for j in DEST for p in PROD
-    )
-    + model.sum(
-        fcost[i, j] * use[i, j]
-        for i in ORIG for j in DEST
-    )
+    vcost @ trans + fcost @ use
 )
 
 # Add constraints
@@ -269,7 +262,7 @@ sol.display(print_zeros=False)
 # Implement with gurobipy
 # -----------------------
 
-from gurobipy import GRB, Model, quicksum
+from gurobipy import GRB, Model
 
 from opti_extensions.gurobipy import addVars
 
@@ -293,14 +286,7 @@ use = addVars(
 
 # Set objective
 model.setObjective(
-    quicksum(
-        vcost[i, j, p] * trans[i, j, p]
-        for i in ORIG for j in DEST for p in PROD
-    )
-    + quicksum(
-        fcost[i, j] * use[i, j]
-        for i in ORIG for j in DEST
-    ),
+    vcost @ trans + fcost @ use,
     sense=GRB.MINIMIZE,
 )
 
@@ -361,14 +347,7 @@ use = addVariables(
 
 # Set objective
 prob.setObjective(
-    xp.Sum(
-        vcost[i, j, p] * trans[i, j, p]
-        for i in ORIG for j in DEST for p in PROD
-    )
-    + xp.Sum(
-        fcost[i, j] * use[i, j]
-        for i in ORIG for j in DEST
-    ),
+    vcost @ trans + fcost @ use,
     sense=xp.minimize,
 )
 

@@ -192,7 +192,7 @@ buy = add_variables(model, indexset=FOOD, vartype='continuous', lb=f_min, ub=f_m
 
 # Set objective
 model.minimize(
-    model.sum(cost[j] * buy[j] for j in FOOD)
+    cost @ buy
 )
 
 # Add constraints
@@ -235,8 +235,8 @@ buy = addVars(model, indexset=FOOD, lb=f_min, ub=f_max, vtype=GRB.CONTINUOUS, na
 
 # Set objective
 model.setObjective(
-    quicksum(cost[j] * buy[j] for j in FOOD),
-    sense=GRB.MINIMIZE
+    cost @ buy,
+    sense=GRB.MINIMIZE,
 )
 
 # Add constraints
@@ -273,8 +273,8 @@ buy = addVariables(prob, indexset=FOOD, vartype=xp.continuous, lb=f_min, ub=f_ma
 
 # Set objective
 prob.setObjective(
-    xp.Sum(cost[j] * buy[j] for j in FOOD),
-    sense=xp.minimize
+    cost @ buy,
+    sense=xp.minimize,
 )
 
 # Add constraints

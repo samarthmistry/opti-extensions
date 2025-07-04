@@ -138,7 +138,7 @@ y = add_variables(model, indexset=FAC, vartype='binary', name='y')
 
 # Set objective
 model.minimize(
-    model.sum(cost[i, j] * x[i, j] for i in CUST for j in FAC)
+    cost @ x
 )
 
 # Add constraints
@@ -165,7 +165,7 @@ sol.display(print_zeros=False)
 # Implement with gurobipy
 # -----------------------
 
-from gurobipy import GRB, Model, quicksum
+from gurobipy import GRB, Model
 
 from opti_extensions.gurobipy import addVars
 
@@ -179,8 +179,8 @@ y = addVars(model, indexset=FAC, vtype=GRB.BINARY, name='y')
 
 # Set objective
 model.setObjective(
-    quicksum(cost[i, j] * x[i, j] for i in CUST for j in FAC),
-    sense=GRB.MINIMIZE
+    cost @ x,
+    sense=GRB.MINIMIZE,
 )
 
 # Add constraints
@@ -221,8 +221,8 @@ y = addVariables(prob, indexset=FAC, vartype=xp.binary, name='y')
 
 # Set objective
 prob.setObjective(
-    xp.Sum(cost[i, j] * x[i, j] for i in CUST for j in FAC),
-    sense=xp.minimize
+    cost @ x,
+    sense=xp.minimize,
 )
 
 # Add constraints
