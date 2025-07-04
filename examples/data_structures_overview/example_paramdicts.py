@@ -16,13 +16,13 @@ parameters for this problem with these data structures.
 # %%
 
 # Let's import the classes defining IndexSets & ParamDicts
+from opti_extensions import ParamDict1D, ParamDictND
+
 # To show fail cases
 import traceback
 
 # We'll also work with dataframes and series
 import pandas as pd
-
-from opti_extensions import ParamDict1D, ParamDictND
 
 # %%
 # ParamDict1D

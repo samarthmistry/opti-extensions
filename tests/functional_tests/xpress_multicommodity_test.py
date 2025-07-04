@@ -148,8 +148,7 @@ def test_multicommodity():
 
     # Minimize the total shipping cost
     prob.setObjective(
-        xp.Sum(vcost[i, j, p] * trans[i, j, p] for i in ORIG for j in DEST for p in PROD)
-        + xp.Sum(fcost[i, j] * use[i, j] for i in ORIG for j in DEST),
+        vcost @ trans + fcost @ use,
         sense=xp.minimize,
     )
 

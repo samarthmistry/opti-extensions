@@ -142,7 +142,7 @@ def test_diet():
     ##### Set objective
 
     # Minimize the total cost of the diet
-    model.minimize(model.sum(cost[j] * buy[j] for j in FOOD))
+    model.minimize(cost @ buy)
 
     ##### Add constraints
 

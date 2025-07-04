@@ -13,7 +13,8 @@ import xpress as xp
 
 from .._dict_mixins import Dict1DMixin, DictNDMixin
 from .._index_sets import Elem1DT, ElemNDT, ElemT, IndexSet1D, IndexSetBase, IndexSetND
-from .._var_dict_base import VarDictBase
+from .._param_dicts import ParamDict1D, ParamDictND, ParamT
+from .._var_dict_base import VarDictBase, _validate_for_dot_1d, _validate_for_dot_Nd
 
 VarT = TypeVar('VarT', bound=xp.var)
 
@@ -217,7 +218,7 @@ class VarDict1D(VarDictCore[Elem1DT, VarT], Dict1DMixin[Elem1DT, VarT]):
         return super().get(key, 0)
 
     def sum(self) -> xp.expression:
-        """Sum all variables in a linear expression.
+        """Sum all variables in an expression.
 
         Returns
         -------
@@ -248,6 +249,111 @@ class VarDict1D(VarDictCore[Elem1DT, VarT], Dict1DMixin[Elem1DT, VarT]):
         node-select(A) + node-select(B) + node-select(C)
         """
         return xp.Sum(self)
+
+    def sum_squares(self) -> xp.expression:
+        """Sum squares of all variables in an expression.
+
+        Returns
+        -------
+        xpress.expression
+
+        Examples
+        --------
+        Create xpress problem:
+
+        >>> import xpress as xp
+        >>> import warnings
+        >>> warnings.filterwarnings('ignore', category=xp.LicenseWarning)
+
+        >>> prob = xp.problem()
+
+        Create index-set:
+
+        >>> nodes = IndexSet1D(['A', 'B', 'C'], name='node')
+
+        Add variables:
+
+        >>> from opti_extensions.xpress import addVariables
+        >>> node_select = addVariables(prob, nodes, name='node-select', vartype=xp.binary)
+
+        Sum squares of all variables:
+
+        >>> node_select.sum_squares()
+        node-select(A) ** 2 + node-select(B) ** 2 + node-select(C) ** 2
+        """
+        return xp.Sum(v**2 for v in self.values())
+
+    def dot(self, paramdict: ParamDict1D[Elem1DT, ParamT]) -> xp.expression:
+        """Sum the products of variables with corresponding coef from ParamDict1D, in an expression.
+
+        Assumes the coef to be zero if not found in the ParamDict1D.
+
+        Equivalent to::
+
+          xp.Sum(paramdict.get(k, 0) * v for k, v in vardict.items())
+
+        Parameters
+        ----------
+        paramdict : ParamDict1D
+            ParamDict1D to be used for dot product.
+
+        Returns
+        -------
+        xp.expression
+
+        Raises
+        ------
+        TypeError
+            If the paramdict is not as instance of ParamDict1D.
+
+        Notes
+        -----
+        This method is equivalent to using the matrix multiplication operator ``@``.
+
+        Both ``ParamDict1D @ VarDict1D`` and ``VarDict1D @ ParamDict1D`` will also produce the same
+        result.
+
+        Examples
+        --------
+        Create xpress problem:
+
+        >>> import xpress as xp
+        >>> import warnings
+        >>> warnings.filterwarnings('ignore', category=xp.LicenseWarning)
+
+        >>> prob = xp.problem()
+
+        Create index-set:
+
+        >>> nodes = IndexSet1D(['A', 'B', 'C'], name='node')
+
+        Add variables:
+
+        >>> from opti_extensions.xpress import addVariables
+        >>> node_select = addVariables(prob, nodes, name='node-select', vartype=xp.binary)
+
+        Define parameter:
+
+        >>> from opti_extensions import ParamDict1D
+        >>> fixed_cost = ParamDict1D({'A': 100, 'B': 200})
+
+        Compute dot product (three alternative ways):
+
+        >>> node_select.dot(fixed_cost)
+        100 * node-select(A) + 200 * node-select(B)
+
+        >>> fixed_cost @ node_select
+        100 * node-select(A) + 200 * node-select(B)
+
+        >>> node_select @ fixed_cost
+        100 * node-select(A) + 200 * node-select(B)
+        """
+        _validate_for_dot_1d(paramdict)
+        return xp.Sum(paramdict.get(k, 0) * v for k, v in self.items())
+
+    __matmul__ = dot
+
+    __rmatmul__ = dot
 
 
 class VarDictND(VarDictCore[ElemNDT, VarT], DictNDMixin[ElemNDT, VarT]):
@@ -380,7 +486,7 @@ class VarDictND(VarDictCore[ElemNDT, VarT], DictNDMixin[ElemNDT, VarT]):
         return super().get(cast('ElemNDT', key), 0)
 
     def sum(self, *pattern: Any) -> xp.expression:
-        """Sum all variables, or a subset based on wildcard pattern, in a linear expression.
+        """Sum all variables, or a subset based on wildcard pattern, in an expression.
 
         Parameters
         ----------
@@ -438,5 +544,140 @@ class VarDictND(VarDictCore[ElemNDT, VarT], DictNDMixin[ElemNDT, VarT]):
         """
         if pattern:
             return xp.Sum(self.subset_values(*pattern))
-
         return xp.Sum(self)
+
+    def sum_squares(self, *pattern: Any) -> xp.expression:
+        """Sum squares of all variables, or a subset based on wildcard pattern, in an expression.
+
+        Parameters
+        ----------
+        *pattern : Any, optional
+            For subsets, the pattern requires one value for each dimension of the N-dim tuple key.
+            The single-character string ``'*'`` (asterisk) can be used as a wildcard to represent
+            all possible values for a dimension.
+
+        Returns
+        -------
+        xpress.expression
+
+        Raises
+        ------
+        TypeError
+            If the pattern includes non-scalar(s).
+        ValueError
+            If the pattern is not the same as the length of N-dim tuple keys.
+        ValueError
+            If the pattern has no wildcard or all wildcards.
+
+        Examples
+        --------
+        Create xpress problem:
+
+        >>> import xpress as xp
+        >>> import warnings
+        >>> warnings.filterwarnings('ignore', category=xp.LicenseWarning)
+
+        >>> prob = xp.problem()
+
+        Create index-set:
+
+        >>> arcs = IndexSetND([('A', 'B'), ('B', 'C'), ('C', 'B')], names=['ori', 'des'])
+
+        Add variables:
+
+        >>> from opti_extensions.xpress import addVariables
+        >>> arc_flow = addVariables(prob, arcs, name='arc-flow', ub=10, vartype=xp.continuous)
+
+        Sum squares of all variables:
+
+        >>> arc_flow.sum_squares()
+        arc-flow(('A', 'B')) ** 2 + arc-flow(('B', 'C')) ** 2 + arc-flow(('C', 'B')) ** 2
+
+        Sum squares of subset of variables having ``'B'`` at the second dimension index:
+
+        >>> arc_flow.sum_squares('*', 'B')
+        arc-flow(('A', 'B')) ** 2 + arc-flow(('C', 'B')) ** 2
+
+        Sum squares of subset of variables having ``'Z'`` at the first dimension index:
+
+        >>> arc_flow.sum_squares('Z', '*')
+        0
+        """
+        if pattern:
+            return xp.Sum(v**2 for v in self.subset_values(*pattern))
+        return xp.Sum(v**2 for v in self.values())
+
+    def dot(self, paramdict: ParamDictND[ElemNDT, ParamT]) -> xp.expression:
+        """Sum the products of variables with corresponding coef from ParamDictND, in an expression.
+
+        Assumes the coef to be zero if not found in the ParamDictND.
+
+        Equivalent to::
+
+          xp.Sum(paramdict.get(k, 0) * v for k, v in vardict.items())
+
+        Parameters
+        ----------
+        paramdict : ParamDictND
+            ParamDictND to be used for dot product; should have tuple keys of same length as
+            VarDictND.
+
+        Returns
+        -------
+        xp.expression
+
+        Raises
+        ------
+        TypeError
+            If the paramdict is not as instance of ParamDictND.
+        ValueError
+            If the paramdict does not have tuple keys of same length as VarDictND.
+
+        Notes
+        -----
+        This method is equivalent to using the matrix multiplication operator ``@``.
+
+        Both ``ParamDictND @ VarDictND`` and ``VarDictND @ ParamDictND`` will also produce the same
+        result.
+
+        Examples
+        --------
+        Create xpress problem:
+
+        >>> import xpress as xp
+        >>> import warnings
+        >>> warnings.filterwarnings('ignore', category=xp.LicenseWarning)
+
+        >>> prob = xp.problem()
+
+        Create index-set:
+
+        >>> arcs = IndexSetND([('A', 'B'), ('B', 'C'), ('C', 'B')], names=['ori', 'des'])
+
+        Add variables:
+
+        >>> from opti_extensions.xpress import addVariables
+        >>> arc_flow = addVariables(prob, arcs, name='arc-flow', ub=10, vartype=xp.continuous)
+
+        Define parameter:
+
+        >>> from opti_extensions import ParamDictND
+        >>> cost = ParamDictND({('A', 'B'): 10, ('B', 'C'): 20})
+
+        Compute dot product (three alternative ways):
+
+        >>> arc_flow.dot(cost)
+        10 * arc-flow(('A', 'B')) + 20 * arc-flow(('B', 'C'))
+
+        >>> cost @ arc_flow
+        10 * arc-flow(('A', 'B')) + 20 * arc-flow(('B', 'C'))
+
+        >>> arc_flow @ cost
+        10 * arc-flow(('A', 'B')) + 20 * arc-flow(('B', 'C'))
+        """
+        _validate_for_dot_Nd(self._indexset, paramdict)
+        return xp.Sum(paramdict.get(k, 0) * v for k, v in self.items())
+
+    __matmul__ = dot
+
+    __rmatmul__ = dot

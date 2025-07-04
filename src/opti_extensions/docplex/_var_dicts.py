@@ -12,11 +12,13 @@ from typing import Any, Literal, TypeVar, cast
 from docplex.mp.dvar import Var
 from docplex.mp.linear import LinearExpr, ZeroExpr
 from docplex.mp.model import Model
+from docplex.mp.quad import QuadExpr
 from docplex.mp.vartype import VarType
 
 from .._dict_mixins import Dict1DMixin, DictNDMixin
 from .._index_sets import Elem1DT, ElemNDT, ElemT, IndexSet1D, IndexSetBase, IndexSetND
-from .._var_dict_base import VarDictBase
+from .._param_dicts import ParamDict1D, ParamDictND, ParamT
+from .._var_dict_base import VarDictBase, _validate_for_dot_1d, _validate_for_dot_Nd
 
 VarT = TypeVar('VarT', bound=Var)
 
@@ -214,12 +216,12 @@ class VarDict1D(VarDictCore[Elem1DT, VarT], Dict1DMixin[Elem1DT, VarT]):
         """
         return super().get(key, 0)
 
-    def sum(self) -> LinearExpr | ZeroExpr:
-        """Sum all variables in a linear expression.
+    def sum(self) -> LinearExpr:
+        """Sum all variables in an expression.
 
         Returns
         -------
-        docplex.mp.linear.LinearExpr or docplex.mp.linear.ZeroExpr
+        docplex.mp.linear.LinearExpr
 
         Examples
         --------
@@ -243,6 +245,105 @@ class VarDict1D(VarDictCore[Elem1DT, VarT], Dict1DMixin[Elem1DT, VarT]):
         docplex.mp.LinearExpr(node-select_A+node-select_B+node-select_C)
         """
         return self.model.sum_vars_all_different(self.values())
+
+    def sum_squares(self) -> QuadExpr:
+        """Sum squares of all variables in an expression.
+
+        Returns
+        -------
+        docplex.mp.quad.QuadExpr
+
+        Examples
+        --------
+        Create DOcplex model:
+
+        >>> from docplex.mp.model import Model
+        >>> mdl = Model()
+
+        Create index-set:
+
+        >>> nodes = IndexSet1D(['A', 'B', 'C'], name='node')
+
+        Add variables:
+
+        >>> from opti_extensions.docplex import add_variables
+        >>> node_select = add_variables(mdl, nodes, 'B', name='node-select')
+
+        Sum squares of all variables:
+
+        >>> node_select.sum_squares()
+        docplex.mp.quad.QuadExpr(node-select_A^2+node-select_B^2+node-select_C^2)
+        """
+        return self.model.sumsq(self.values())
+
+    def dot(self, paramdict: ParamDict1D[Elem1DT, ParamT]) -> LinearExpr | ZeroExpr:
+        """Sum the products of variables with corresponding coef from ParamDict1D, in an expression.
+
+        Assumes the coef to be zero if not found in the ParamDict1D.
+
+        Equivalent to::
+
+          model.sum(paramdict.get(k, 0) * v for k, v in vardict.items())
+
+        Parameters
+        ----------
+        paramdict : ParamDict1D
+            ParamDict1D to be used for dot product.
+
+        Returns
+        -------
+        docplex.mp.linear.LinearExpr or docplex.mp.linear.ZeroExpr
+
+        Raises
+        ------
+        TypeError
+            If the paramdict is not as instance of ParamDict1D.
+
+        Notes
+        -----
+        This method is equivalent to using the matrix multiplication operator ``@``.
+
+        Both ``ParamDict1D @ VarDict1D`` and ``VarDict1D @ ParamDict1D`` will also produce the same
+        result.
+
+        Examples
+        --------
+        Create DOcplex model:
+
+        >>> from docplex.mp.model import Model
+        >>> mdl = Model()
+
+        Create index-set:
+
+        >>> nodes = IndexSet1D(['A', 'B', 'C'], name='node')
+
+        Add variables:
+
+        >>> from opti_extensions.docplex import add_variables
+        >>> node_select = add_variables(mdl, nodes, 'B', name='node-select')
+
+        Define parameter:
+
+        >>> from opti_extensions import ParamDict1D
+        >>> fixed_cost = ParamDict1D({'A': 100, 'B': 200})
+
+        Compute dot product (three alternative ways):
+
+        >>> node_select.dot(fixed_cost)
+        docplex.mp.LinearExpr(100node-select_A+200node-select_B)
+
+        >>> fixed_cost @ node_select
+        docplex.mp.LinearExpr(100node-select_A+200node-select_B)
+
+        >>> node_select @ fixed_cost
+        docplex.mp.LinearExpr(100node-select_A+200node-select_B)
+        """
+        _validate_for_dot_1d(paramdict)
+        return self.model.sum(paramdict.get(k, 0) * v for k, v in self.items())
+
+    __matmul__ = dot
+
+    __rmatmul__ = dot
 
 
 class VarDictND(VarDictCore[ElemNDT, VarT], DictNDMixin[ElemNDT, VarT]):
@@ -371,7 +472,7 @@ class VarDictND(VarDictCore[ElemNDT, VarT], DictNDMixin[ElemNDT, VarT]):
         return super().get(cast('ElemNDT', key), 0)
 
     def sum(self, *pattern: Any) -> LinearExpr | ZeroExpr:
-        """Sum all variables, or a subset based on wildcard pattern, in a linear expression.
+        """Sum all variables, or a subset based on wildcard pattern, in an expression.
 
         Parameters
         ----------
@@ -427,3 +528,133 @@ class VarDictND(VarDictCore[ElemNDT, VarT], DictNDMixin[ElemNDT, VarT]):
         if pattern:
             return self.model.sum_vars_all_different(self.subset_values(*pattern))
         return self.model.sum_vars_all_different(self.values())
+
+    def sum_squares(self, *pattern: Any) -> QuadExpr | ZeroExpr:
+        """Sum squares of all variables, or a subset based on wildcard pattern, in an expression.
+
+        Parameters
+        ----------
+        *pattern : Any, optional
+            For subsets, the pattern requires one value for each dimension of the N-dim tuple key.
+            The single-character string ``'*'`` (asterisk) can be used as a wildcard to represent
+            all possible values for a dimension.
+
+        Returns
+        -------
+        docplex.mp.quad.QuadExpr or docplex.mp.linear.ZeroExpr
+
+        Raises
+        ------
+        TypeError
+            If the pattern includes non-scalar(s).
+        ValueError
+            If the pattern is not the same as the length of N-dim tuple keys.
+        ValueError
+            If the pattern has no wildcard or all wildcards.
+
+        Examples
+        --------
+        Create DOcplex model:
+
+        >>> from docplex.mp.model import Model
+        >>> mdl = Model()
+
+        Create index-set:
+
+        >>> arcs = IndexSetND([('A', 'B'), ('B', 'C'), ('C', 'B')], names=['ori', 'des'])
+
+        Add variables:
+
+        >>> from opti_extensions.docplex import add_variables
+        >>> arc_flow = add_variables(mdl, arcs, 'C', ub=10, name='arc-flow')
+
+        Sum squares of all variables:
+
+        >>> arc_flow.sum_squares()
+        docplex.mp.quad.QuadExpr(arc-flow_A_B^2+arc-flow_B_C^2+arc-flow_C_B^2)
+
+        Sum squares of subset of variables having ``'B'`` at the second dimension index:
+
+        >>> arc_flow.sum_squares('*', 'B')
+        docplex.mp.quad.QuadExpr(arc-flow_A_B^2+arc-flow_C_B^2)
+
+        Sum squares of subset of variables having ``'Z'`` at the first dimension index:
+
+        >>> arc_flow.sum_squares('Z', '*')
+        docplex.mp.ZeroExpr()
+        """
+        if pattern:
+            return self.model.sumsq(self.subset_values(*pattern))
+        return self.model.sumsq(self.values())
+
+    def dot(self, paramdict: ParamDictND[ElemNDT, ParamT]) -> LinearExpr | ZeroExpr:
+        """Sum the products of variables with corresponding coef from ParamDictND, in an expression.
+
+        Assumes the coef to be zero if not found in the ParamDictND.
+
+        Equivalent to::
+
+          model.sum(paramdict.get(k, 0) * v for k, v in vardict.items())
+
+        Parameters
+        ----------
+        paramdict : ParamDictND
+            ParamDictND to be used for dot product; should have tuple keys of same length as
+            VarDictND.
+
+        Returns
+        -------
+        docplex.mp.linear.LinearExpr or docplex.mp.linear.ZeroExpr
+
+        Raises
+        ------
+        TypeError
+            If the paramdict is not as instance of ParamDictND.
+        ValueError
+            If the paramdict does not have tuple keys of same length as VarDictND.
+
+        Notes
+        -----
+        This method is equivalent to using the matrix multiplication operator ``@``.
+
+        Both ``ParamDictND @ VarDictND`` and ``VarDictND @ ParamDictND`` will also produce the same
+        result.
+
+        Examples
+        --------
+        Create DOcplex model:
+
+        >>> from docplex.mp.model import Model
+        >>> mdl = Model()
+
+        Create index-set:
+
+        >>> arcs = IndexSetND([('A', 'B'), ('B', 'C'), ('C', 'B')], names=['ori', 'des'])
+
+        Add variables:
+
+        >>> from opti_extensions.docplex import add_variables
+        >>> arc_flow = add_variables(mdl, arcs, 'C', ub=10, name='arc-flow')
+
+        Define parameter:
+
+        >>> from opti_extensions import ParamDictND
+        >>> cost = ParamDictND({('A', 'B'): 10, ('B', 'C'): 20})
+
+        Compute dot product (three alternative ways):
+
+        >>> arc_flow.dot(cost)
+        docplex.mp.LinearExpr(10arc-flow_A_B+20arc-flow_B_C)
+
+        >>> cost @ arc_flow
+        docplex.mp.LinearExpr(10arc-flow_A_B+20arc-flow_B_C)
+
+        >>> arc_flow @ cost
+        docplex.mp.LinearExpr(10arc-flow_A_B+20arc-flow_B_C)
+        """
+        _validate_for_dot_Nd(self._indexset, paramdict)
+        return self.model.sum(paramdict.get(k, 0) * v for k, v in self.items())
+
+    __matmul__ = dot
+
+    __rmatmul__ = dot

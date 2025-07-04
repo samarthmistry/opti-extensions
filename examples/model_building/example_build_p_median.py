@@ -132,18 +132,25 @@ from opti_extensions.docplex import add_variables, solve
 model = Model(name='p-median')
 
 # Add variables
-# Use `add_variables` from opti-extensions instead of `model.binary_var_dict`
 x = add_variables(model, indexset=CUST_x_FAC, vartype='binary', name='x')
+# Instead of:
+# x = model.binary_var_dict(CUST_x_FAC, name='x')
 y = add_variables(model, indexset=FAC, vartype='binary', name='y')
+# Instead of:
+# y = model.binary_var_dict(FAC, name='y')
 
 # Set objective
 model.minimize(
-    model.sum(cost[i, j] * x[i, j] for i in CUST for j in FAC)
+    cost @ x
+    # Instead of:
+    # model.sum(cost[i, j] * x[i, j] for i in CUST for j in FAC)
 )
 
 # Add constraints
 model.add_constraints_(
     x.sum(i, '*') == 1
+    # Instead of:
+    # model.sum(x[i, j] for j in FAC) == 1
     for i in CUST
 )
 model.add_constraints_(
@@ -152,11 +159,14 @@ model.add_constraints_(
 )
 model.add_constraint_(
     y.sum() == p
+    # Instead of:
+    # model.sum(y[j] for j in FAC) == p
 )
 
 # Solve with additional logging output for problem and solution statistics
-# Use `solve` from opti-extensions instead of `model.solve`
 sol = solve(model, log_output=True)
+# Instead of:
+# sol = model.solve(log_output=True)
 
 # %%
 sol.display(print_zeros=False)
@@ -165,7 +175,7 @@ sol.display(print_zeros=False)
 # Implement with gurobipy
 # -----------------------
 
-from gurobipy import GRB, Model, quicksum
+from gurobipy import GRB, Model
 
 from opti_extensions.gurobipy import addVars
 
@@ -173,19 +183,26 @@ from opti_extensions.gurobipy import addVars
 model = Model(name='p-median')
 
 # Add variables
-# Use `addVars` from opti-extensions instead of `model.addVars`
 x = addVars(model, indexset=CUST_x_FAC, vtype=GRB.BINARY, name='x')
+# Instead of:
+# x = model.addVars(CUST_x_FAC, vtype=GRB.BINARY, name='x')
 y = addVars(model, indexset=FAC, vtype=GRB.BINARY, name='y')
+# Instead of:
+# y = model.addVars(FAC, vtype=GRB.BINARY, name='y')
 
 # Set objective
 model.setObjective(
-    quicksum(cost[i, j] * x[i, j] for i in CUST for j in FAC),
-    sense=GRB.MINIMIZE
+    cost @ x,
+    # Instead of:
+    # quicksum(cost[i, j] * x[i, j] for i in CUST for j in FAC)
+    sense=GRB.MINIMIZE,
 )
 
 # Add constraints
 model.addConstrs(
     x.sum(i, '*') == 1
+    # Instead of:
+    # quicksum(x[i, j] for j in FAC) == 1
     for i in CUST
 )
 model.addConstrs(
@@ -194,6 +211,8 @@ model.addConstrs(
 )
 model.addConstr(
     y.sum() == p
+    # Instead of:
+    # quicksum(y[j] for j in FAC) == p
 )
 
 # Solve
@@ -215,19 +234,26 @@ from opti_extensions.xpress import addVariables
 prob = xp.problem(name='p-median')
 
 # Add variables
-# Use `addVariables` from opti-extensions instead of `prob.addVariables`
 x = addVariables(prob, indexset=CUST_x_FAC, vartype=xp.binary, name='x')
+# Instead of:
+# x = prob.addVariables(CUST_x_FAC, vartype=xp.binary, name='x')
 y = addVariables(prob, indexset=FAC, vartype=xp.binary, name='y')
+# Instead of:
+# y = prob.addVariables(FAC, vartype=xp.binary, name='y')
 
 # Set objective
 prob.setObjective(
-    xp.Sum(cost[i, j] * x[i, j] for i in CUST for j in FAC),
-    sense=xp.minimize
+    cost @ x,
+    # Instead of:
+    # xp.Sum(cost[i, j] * x[i, j] for i in CUST for j in FAC)
+    sense=xp.minimize,
 )
 
 # Add constraints
 prob.addConstraint(
     x.sum(i, '*') == 1
+    # Instead of:
+    # xp.Sum(x[i, j] for j in FAC) == 1
     for i in CUST
 )
 prob.addConstraint(
@@ -236,6 +262,8 @@ prob.addConstraint(
 )
 prob.addConstraint(
     y.sum() == p
+    # Instead of:
+    # xp.Sum(y[j] for j in FAC) == p
 )
 
 # Solve

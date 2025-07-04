@@ -17,13 +17,13 @@ sets for this problem with these data structures.
 # %%
 
 # Let's import the classes defining IndexSets
+from opti_extensions import IndexSet1D, IndexSetND
+
 # To show fail cases
 import traceback
 
 # We'll also work with dataframes and series
 import pandas as pd
-
-from opti_extensions import IndexSet1D, IndexSetND
 
 # %%
 # IndexSet1D

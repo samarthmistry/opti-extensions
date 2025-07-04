@@ -10,7 +10,7 @@ https://github.com/ampl/colab.ampl.com/blob/master/ampl-book/multmip1.ipynb
 """
 
 import pandas as pd
-from gurobipy import GRB, Model, quicksum
+from gurobipy import GRB, Model
 
 from opti_extensions import IndexSetND
 from opti_extensions.gurobipy import addVars
@@ -141,8 +141,7 @@ def test_multicommodity():
 
     # Minimize the total shipping cost
     model.setObjective(
-        quicksum(vcost[i, j, p] * trans[i, j, p] for i in ORIG for j in DEST for p in PROD)
-        + quicksum(fcost[i, j] * use[i, j] for i in ORIG for j in DEST),
+        vcost @ trans + fcost @ use,
         GRB.MINIMIZE,
     )
 

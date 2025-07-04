@@ -9,7 +9,7 @@ A collection of custom data structures and user-friendly functions for mathemati
 modeling with docplex, gurobipy, and xpress.
 """
 
-__version__ = '1.0.0'
+__version__ = '1.1.0'
 
 # Package functionality
 from ._index_sets import IndexSet1D, IndexSetND

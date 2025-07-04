@@ -147,7 +147,7 @@ def test_diet():
     ##### Set objective
 
     # Minimize the total cost of the diet
-    prob.setObjective(xp.Sum(cost[j] * buy[j] for j in FOOD), sense=xp.minimize)
+    prob.setObjective(cost @ buy, sense=xp.minimize)
 
     ##### Add constraints
 

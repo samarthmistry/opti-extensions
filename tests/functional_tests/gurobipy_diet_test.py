@@ -140,7 +140,7 @@ def test_diet():
     ##### Set objective
 
     # Minimize the total cost of the diet
-    model.setObjective(quicksum(cost[j] * buy[j] for j in FOOD), GRB.MINIMIZE)
+    model.setObjective(cost @ buy, GRB.MINIMIZE)
 
     ##### Add constraints
 

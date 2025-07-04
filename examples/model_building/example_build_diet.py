@@ -187,33 +187,31 @@ from opti_extensions.docplex import add_variables, solve
 model = Model(name='diet')
 
 # Add variables
-# Use `add_variables` from opti-extensions instead of `model.continuous_var_dict`
 buy = add_variables(model, indexset=FOOD, vartype='continuous', lb=f_min, ub=f_max, name='BUY-QTY')
+# Instead of:
+# buy = model.continuous_var_dict(FOOD, lb=[f_min[j] for j in FOOD], ub=[f_max[j] for j in FOOD], name='BUY-QTY')
 
 # Set objective
 model.minimize(
-    model.sum(cost[j] * buy[j] for j in FOOD)
+    cost @ buy
+    # Instead of:
+    # model.sum(cost[j] * buy[j] for j in FOOD)
 )
 
 # Add constraints
 model.add_constraints_(
-    (
-        model.sum(amt[i, j] * buy[j] for j in FOOD) >= n_min[i],
-        f'min-nutr-reqd_{i}',
-    )
+    model.sum(amt[i, j] * buy[j] for j in FOOD) >= n_min[i]
     for i in NUTR
 )
 model.add_constraints_(
-    (
-        model.sum(amt[i, j] * buy[j] for j in FOOD) <= n_max[i],
-        f'max-nutr-allwd_{i}',
-    )
+    model.sum(amt[i, j] * buy[j] for j in FOOD) <= n_max[i]
     for i in NUTR
 )
 
 # Solve with additional logging output for problem and solution statistics
-# Use `solve` from opti-extensions instead of `model.solve`
 sol = solve(model, log_output=True)
+# Instead of:
+# sol = model.solve(log_output=True)
 
 # %%
 sol.display(print_zeros=False)
@@ -230,23 +228,24 @@ from opti_extensions.gurobipy import addVars
 model = Model(name='diet')
 
 # Add variables
-# Use `addVars` from opti-extensions instead of `model.addVars`
 buy = addVars(model, indexset=FOOD, lb=f_min, ub=f_max, vtype=GRB.CONTINUOUS, name='BUY-QTY')
+# Instead of:
+# buy = model.addVars(FOOD, lb=f_min, ub=f_max, vtype=GRB.CONTINUOUS, name='BUY-QTY')
 
 # Set objective
 model.setObjective(
-    quicksum(cost[j] * buy[j] for j in FOOD),
-    sense=GRB.MINIMIZE
+    cost @ buy,
+    # Instead of:
+    # quicksum(cost[j] * buy[j] for j in FOOD)
+    sense=GRB.MINIMIZE,
 )
 
 # Add constraints
 model.addConstrs(
-    (quicksum(amt[i, j] * buy[j] for j in FOOD) >= n_min[i] for i in NUTR),
-    name='min-nutr-reqd',
+    quicksum(amt[i, j] * buy[j] for j in FOOD) >= n_min[i] for i in NUTR
 )
 model.addConstrs(
-    (quicksum(amt[i, j] * buy[j] for j in FOOD) <= n_max[i] for i in NUTR),
-    name='max-nutr-allwd',
+    quicksum(amt[i, j] * buy[j] for j in FOOD) <= n_max[i] for i in NUTR
 )
 
 # Solve
@@ -268,13 +267,19 @@ from opti_extensions.xpress import addVariables
 prob = xp.problem(name='diet')
 
 # Add variables
-# Use `addVariables` from opti-extensions instead of `prob.addVariables`
 buy = addVariables(prob, indexset=FOOD, vartype=xp.continuous, lb=f_min, ub=f_max, name='BUY-QTY')
+# Instead of:
+# buy = {
+#     j: prob.addVariable(name=f'x({j})', ub=f_min.get(j, 0), ub=f_max.get(j, xp.infinity), vartype=xp.continuous)
+#     for j in FOOD
+# }
 
 # Set objective
 prob.setObjective(
-    xp.Sum(cost[j] * buy[j] for j in FOOD),
-    sense=xp.minimize
+    cost @ buy,
+    # Instead of:
+    # xp.Sum(cost[j] * buy[j] for j in FOOD)
+    sense=xp.minimize,
 )
 
 # Add constraints

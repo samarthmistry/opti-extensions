@@ -11,12 +11,18 @@ are immutable subclasses of Python's dict with some additional functionality.
 
 Suppose we want build a model to solve the facility location problem. We'll define the
 variables for this problem with these data structures.
+
+.. note::
+
+    We'll be using DOcplex here, but the same approach will work for gurobipy and Xpress.
 """
 
 # %%
 
-# We'll work with DOcplex here, but the same approach applies to gurobipy and Xpress
-# To show fail cases
+# Let's import the classes defining IndexSets, and the function that adds variables based on
+# IndexSets and returns VarDicts
+from opti_extensions import IndexSet1D, IndexSetND
+from opti_extensions.docplex import add_variables
 
 # We'll also work with dataframes and series
 import pandas as pd
@@ -24,9 +30,6 @@ import pandas as pd
 # %%
 # Let's instantiate a DOcplex model
 from docplex.mp.model import Model
-
-from opti_extensions import IndexSet1D, IndexSetND
-from opti_extensions.docplex import add_variables
 
 mdl = Model()
 
@@ -123,10 +126,45 @@ print({j: select_fac.lookup(j) for j in ('F1', 'F2', 'F99')})
 # ^^^^^^^^^^^^^^^^^^^^
 
 # %%
-# It has a special method for directly summing up variables.
+# It has special methods for numerical operations: `sum`, `sum_squares`, and `dot` / ``@`` operator.
+
+# %%
+# `dot` method / ``@`` operator
+# """""""""""""""""""""""""""""
+
+# %%
+# To sum the products of variables with corresponding coef from ParamDict1D. Assumes the coef to be
+# zero if not found in the ParamDict1D.
+
+# %%
+
+# Define COST parameter
+from opti_extensions import ParamDict1D
+
+FIXED_COST = ParamDict1D(
+    {'F1': 10000, 'F2': 20000},
+    #   does NOT include: 'F3' ^^^^
+)
+
+# Compute dot product of COST parameter with dem_alloc variables
+print(select_fac.dot(FIXED_COST))
+
+# %%
+
+# Alternative syntax with the `@` operator
+print(FIXED_COST @ select_fac)
+print(select_fac @ FIXED_COST)
+
+# %%
+# `sum` & `sum_squares` methods
+# """""""""""""""""""""""""""""
+
+# %%
+# To directly sum all or a subset of variables, and sum squares of all or a subset of variables.
 
 # %%
 print(select_fac.sum())
+print(select_fac.sum_squares())
 
 # %%
 # VarDictND
@@ -255,18 +293,63 @@ print('With if check:', [val for elem, val in dem_alloc.items() if elem[1] == 1]
 # ^^^^^^^^^^^^^^^^^^^^
 
 # %%
-# It has a special method for directly summing up all or a subset of variables.
+# It has special methods for numerical operations: `sum`, `sum_squares`, and `dot` / ``@`` operator.
+
+# %%
+# `dot` method / ``@`` operator
+# """""""""""""""""""""""""""""
+
+# %%
+# To sum the products of variables with corresponding coef from ParamDictND. Assumes the coef to be
+# zero if not found in the ParamDictND.
 
 # %%
 
-# Sum all variables of dem_alloc
+# Define COST parameter
+from opti_extensions import ParamDictND
+
+COST = ParamDictND(
+    {('F1', 1): 197, ('F1', 2): 345, ('F2', 1): 99, ('F2', 2): 270, ('F3', 1): 205},
+    #                                                   does NOT include: ('F3', 2) ^^^^
+)
+
+# Compute dot product of COST parameter with dem_alloc variables
+print(dem_alloc.dot(COST))
+
+# %%
+
+# Alternative syntax with the `@` operator
+print(COST @ dem_alloc)
+print(dem_alloc @ COST)
+
+# %%
+# `sum` & `sum_squares` methods
+# """""""""""""""""""""""""""""
+
+# %%
+# To directly sum all or a subset of variables, and sum squares of all or a subset of variables.
+
+# %%
+
+# Sum all dem_alloc variables
 print(dem_alloc.sum())
 
 # %%
 
-# Sum over a subset of variables, that have the value 'F1' in the first dimension and any value in
-# the second dimension of dem_alloc, based on wildcard pattern
+# Sum a subset of dem_alloc variables, that have the value 'F1' in the first dimension and any value in
+# the second dimension, based on wildcard pattern
 print(dem_alloc.sum('F1', '*'))
+
+# %%
+
+# Sum squares of all dem_alloc variables
+print(dem_alloc.sum_squares())
+
+# %%
+
+# Sum squares of a subset of dem_alloc variables, that have the value 'F1' in the first dimension and any
+# value in the second dimension, based on wildcard pattern
+print(dem_alloc.sum_squares('F1', '*'))
 
 # %%
 # Not only does it provide a cleaner syntax, but it is also very performant because of an internal
