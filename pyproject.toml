@@ -6,8 +6,18 @@ build-backend = "setuptools.build_meta"
 name = "opti-extensions"
 description = """\
     A collection of custom data structures and user-friendly functions for mathematical \
-    optimization modeling with docplex, gurobipy, and xpress.\
+    optimization modeling with DOcplex, gurobipy, and Xpress.\
 """
+keywords = [
+    "CPLEX",
+    "DOcplex",
+    "Gurobi",
+    "gurobipy",
+    "Xpress",
+    "linear programming",
+    "mixed integer programming",
+    "optimization model",
+]
 readme = "README.md"
 license = "Apache-2.0"
 license-files = ["LICENSE", "NOTICE"]
