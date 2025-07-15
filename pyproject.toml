@@ -78,8 +78,9 @@ dev = [
 ]
 
 [project.urls]
-Documentation = "https://opti-extensions.readthedocs.io/en/stable"
-"Source code" = "https://github.com/samarthmistry/opti-extensions"
+Homepage = "https://opti-extensions.readthedocs.io/"
+Documentation = "https://opti-extensions.readthedocs.io/en/stable/#documentation"
+"Source code" = "https://github.com/samarthmistry/opti-extensions/tree/main/src/opti_extensions"
 Changelog = "https://github.com/samarthmistry/opti-extensions/releases"
 
 [tool.setuptools.dynamic]
