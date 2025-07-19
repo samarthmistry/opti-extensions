@@ -6,7 +6,7 @@
 ParamDict data structures
 =========================
 
-We give an overview of the ParamDict data structures provided in `opti-extensions`. They
+We give an overview of the ParamDict data structures provided in opti-extensions. They
 are subclasses of Python's dict with some additional functionality.
 
 Suppose we want build a model to solve the facility location problem. We'll define the
@@ -40,8 +40,14 @@ import pandas as pd
 # `int` or `float`.
 
 # %%
-# -  | Demand of customer :math:`i`:
-#    | :math:`dem_{i} \in \mathbb{R}^{+} \quad \forall \; i \in CUST`
+# .. tip::
+#
+#     **Type annotations**: Being a subclass of Python's `dict`, `ParamDict1D` is also a generic
+#     container type and can be annotated accordingly. Additionally, opti-extensions provides a
+#     type-complete interface, enabling most type checkers and LSPs to infer the type automatically.
+
+# %%
+# **Demand of customer :math:`i`:** :math:`dem_{i} \in \mathbb{R}^{+} \quad \forall \; i \in CUST`
 
 # %%
 
@@ -49,8 +55,10 @@ import pandas as pd
 DEM = ParamDict1D(
     {0: 215, 1: 138, 2: 240, 3: 134, 4: 149},
 )
-# Type annotation of DEM is `ParamDict1D[int, int]`
 print(DEM)
+
+# %%
+# Type annotation of `DEM` is `ParamDict1D[int, int]`, similar to `dict[int, int]`.
 
 # %%
 # Fail cases
@@ -162,6 +170,13 @@ print(f'{DEM.median_high() = }')
 # -----------
 
 # %%
+# .. tip::
+#
+#     **Type annotations**: Being a subclass of Python's `dict`, `ParamDictND` is also a generic
+#     container type and can be annotated accordingly. Additionally, opti-extensions provides a
+#     type-complete interface, enabling most type checkers and LSPs to infer the type automatically.
+
+# %%
 # Constructor
 # ^^^^^^^^^^^
 
@@ -173,8 +188,8 @@ print(f'{DEM.median_high() = }')
 # (with each tuple element having the same length) and the values should be `int` or `float`.
 
 # %%
-# -  | Cost of supplying customer :math:`i` from facility :math:`j`:
-#    | :math:`cost_{i, j} \in \mathbb{R}^{+} \quad \forall \; (i, j) \in FAC\_CUST`
+# **Cost of supplying customer :math:`i` from facility :math:`j`:**
+# :math:`cost_{i, j} \in \mathbb{R}^{+} \quad \forall \; (i, j) \in FAC\_CUST`
 
 # %%
 
@@ -182,8 +197,11 @@ print(f'{DEM.median_high() = }')
 COST = ParamDictND(
     {('F1', 1): 197, ('F1', 2): 345, ('F2', 1): 99, ('F2', 2): 270, ('F3', 1): 205, ('F3', 2): 360},
 )
-# Type annotation of COST is `ParamDictND[tuple[str, int], int]`
 print(COST)
+
+# %%
+# Type annotation of `COST` is `ParamDictND[tuple[str, int], int]`, similar to
+# `dict[tuple[str, int], int]`.
 
 # %%
 # Fail cases
@@ -392,11 +410,17 @@ print(f'Execution time: {1000 * sum(times) / len(times):08.3f} ms')
 
 # %%
 # opti-extensions provides optional functionality to directly cast pandas Series/DataFrame/Index
-# objects into ParamDict data structures.  If pandas is present in the python environment, this
+# objects into ParamDict data structures. If pandas is present in the python environment, this
 # functionality will be registered with a custom ``.opti`` accessor when opti-extensions is
 # imported.
+
+# %%
+# .. tip::
 #
-# Note: The opti-extensions package has to be imported first to use this method with pandas.
+#     **Type annotations**: Since this functionality is registered at runtime, Python type checkers
+#     and LSPs that use static type checking cannot automatically infer the types. The user will
+#     need to annotate the ParamDict data structures created through these methods for type
+#     checking.
 
 # %%
 
