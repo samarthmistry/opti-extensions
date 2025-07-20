@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 
 
 def _check_empty(pd_obj: Series[Any] | DataFrame | Index[Any]) -> None:
-    """Raise a ValueError is a pandas object is empty.
+    """Raise a ValueError if a pandas object is empty.
 
     Parameters
     ----------
@@ -28,7 +28,7 @@ def _check_empty(pd_obj: Series[Any] | DataFrame | Index[Any]) -> None:
 
 
 def _check_duplicate_idx(pd_obj: Series[Any] | DataFrame) -> None:
-    """Raise a ValueError is a pandas object has duplicate index-label(s).
+    """Raise a ValueError if a pandas object has duplicate index-label(s).
 
     Parameters
     ----------
