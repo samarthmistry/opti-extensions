@@ -19,6 +19,9 @@ sets for this problem with these data structures.
 # Let's import the classes defining IndexSets
 from opti_extensions import IndexSet1D, IndexSetND
 
+# To show subclass
+import collections.abc
+
 # To show fail cases
 import traceback
 
@@ -35,6 +38,10 @@ import pandas as pd
 #     **Type annotations**: Like Python's `list`, `IndexSet1D` is a generic container type and can
 #     be annotated accordingly. Additionally, opti-extensions provides a type-complete interface,
 #     enabling most type checkers and LSPs to infer the type automatically.
+
+# %%
+
+print(issubclass(IndexSet1D, collections.abc.MutableSequence))
 
 # %%
 # Constructor
@@ -165,6 +172,10 @@ print(s)
 #     **Type annotations**: Like Python's `list`, `IndexSetND` is a generic container type and can
 #     be annotated accordingly. Additionally, opti-extensions provides a type-complete interface,
 #     enabling most type checkers and LSPs to infer the type automatically.
+
+# %%
+
+print(issubclass(IndexSetND, collections.abc.MutableSequence))
 
 # %%
 # Constructor

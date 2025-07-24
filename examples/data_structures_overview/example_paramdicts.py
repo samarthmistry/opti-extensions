@@ -29,6 +29,17 @@ import pandas as pd
 # -----------
 
 # %%
+# .. tip::
+#
+#     **Type annotations**: Being a subclass of Python's `dict`, `ParamDict1D` is also a generic
+#     container type and can be annotated accordingly. Additionally, opti-extensions provides a
+#     type-complete interface, enabling most type checkers and LSPs to infer the type automatically.
+
+# %%
+
+print(issubclass(ParamDict1D, dict))
+
+# %%
 # Constructor
 # ^^^^^^^^^^^
 
@@ -38,13 +49,6 @@ import pandas as pd
 # name suggests, should be used for parameters indexed unidimensional sets. The ParamDict keys
 # should be 'scalar' data types such as `int`, `str`, `pd.Timestamp`, etc. and the values should be
 # `int` or `float`.
-
-# %%
-# .. tip::
-#
-#     **Type annotations**: Being a subclass of Python's `dict`, `ParamDict1D` is also a generic
-#     container type and can be annotated accordingly. Additionally, opti-extensions provides a
-#     type-complete interface, enabling most type checkers and LSPs to infer the type automatically.
 
 # %%
 # **Demand of customer :math:`i`:** :math:`dem_{i} \in \mathbb{R}^{+} \quad \forall \; i \in CUST`
@@ -175,6 +179,10 @@ print(f'{DEM.median_high() = }')
 #     **Type annotations**: Being a subclass of Python's `dict`, `ParamDictND` is also a generic
 #     container type and can be annotated accordingly. Additionally, opti-extensions provides a
 #     type-complete interface, enabling most type checkers and LSPs to infer the type automatically.
+
+# %%
+
+print(issubclass(ParamDictND, dict))
 
 # %%
 # Constructor

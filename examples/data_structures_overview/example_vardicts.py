@@ -22,7 +22,7 @@ variables for this problem with these data structures.
 # Let's import the classes defining IndexSets, and the function that adds variables based on
 # IndexSets and returns VarDicts
 from opti_extensions import IndexSet1D, IndexSetND
-from opti_extensions.docplex import add_variables
+from opti_extensions.docplex import add_variables, VarDict1D, VarDictND
 
 # We'll also work with dataframes and series
 import pandas as pd
@@ -43,6 +43,10 @@ mdl = Model()
 #     **Type annotations**: Being a subclass of Python's `dict`, `VarDict1D` is also a generic
 #     container type and can be annotated accordingly. Additionally, opti-extensions provides a
 #     type-complete interface, enabling most type checkers and LSPs to infer the type automatically.
+
+# %%
+
+print(issubclass(VarDict1D, dict))
 
 # %%
 # Constructor
@@ -186,6 +190,10 @@ print(select_fac.sum_squares())
 #     **Type annotations**: Being a subclass of Python's `dict`, `VarDictND` is also a generic
 #     container type and can be annotated accordingly. Additionally, opti-extensions provides a
 #     type-complete interface, enabling most type checkers and LSPs to infer the type automatically.
+
+# %%
+
+print(issubclass(VarDictND, dict))
 
 # %%
 # Constructor
