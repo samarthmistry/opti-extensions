@@ -204,8 +204,6 @@ exclude_also = [
     "def _get_repr_header", # repr
     "def __repr__",         # repr
     "def _repr_pretty_",    # repr
-    "if TYPE_CHECKING",     # typing
-    "@overload",            # typing
     "except ImportError",   # optional dependency
 ]
 
