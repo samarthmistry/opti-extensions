@@ -30,6 +30,11 @@ def set1d_012():
 
 
 @pytest.fixture
+def set1d_345():
+    return IndexSet1D([3, 4, 5])
+
+
+@pytest.fixture
 def setNd_emp():
     return IndexSetND()
 
@@ -47,6 +52,11 @@ def setNd_01():
 @pytest.fixture
 def setNd_012():
     return IndexSetND([(0, 0), (0, 1), (0, 2)])
+
+
+@pytest.fixture
+def setNd_345():
+    return IndexSetND([(0, 3), (0, 4), (0, 5)])
 
 
 @pytest.fixture

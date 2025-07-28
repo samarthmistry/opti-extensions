@@ -153,13 +153,17 @@ print(s)
 # ^^^^^^^^^^^^^
 
 # %%
-# It supports all methods of python's `list`. Please refer to the
+# (1) It supports all methods of `list`. Please refer to the
 # `Sequence operations <../../api_reference/index_sets.html#sequence-operations>`__ and
-# `Dunder methods <../../api_reference/index_sets.html#dunder-methods>`__ sections of
+# `Dunder methods <../../api_reference/index_sets.html#dunder-methods>`__ sections
+# of `API Reference` for more details.
+#
+# (2) It supports rich comparisons like `set`. Please refer to the
+# `Set comparison <../../api_reference/index_sets.html#set-comparison>`__ section of
 # `API Reference` for more details.
 #
-# It also supports rich/symbolic comparisons like python's `set`. Please refer to the
-# `Set comparison <../../api_reference/index_sets.html#set-comparison>`__ section of
+# (3) It supports set operations like `set`. Please refer to the
+# `Set operations <../../api_reference/index_sets.html#set-operations>`__ section of
 # `API Reference` for more details.
 
 # %%
@@ -289,13 +293,17 @@ print(df)
 # ^^^^^^^^^^^^^
 
 # %%
-# It supports all methods of python's `list`. Please refer to the
-# `Sequence operations <../../api_reference/index_sets.html#id4>`__ and
-# `Dunder methods <../../api_reference/index_sets.html#id5>`__ sections
+# (1) It supports all methods of `list`. Please refer to the
+# `Sequence operations <../../api_reference/index_sets.html#id3>`__ and
+# `Dunder methods <../../api_reference/index_sets.html#id6>`__ sections
 # of `API Reference` for more details.
 #
-# It also supports rich/symbolic comparisons like python's `set`. Please refer to the
-# `Set comparison <../../api_reference/index_sets.html#id3>`__ section of
+# (2) It supports rich comparisons like `set`. Please refer to the
+# `Set comparison <../../api_reference/index_sets.html#id4>`__ section of
+# `API Reference` for more details.
+#
+# (3) It supports set operations like `set`. Please refer to the
+# `Set operations <../../api_reference/index_sets.html#id5>`__ section of
 # `API Reference` for more details.
 
 
