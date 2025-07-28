@@ -24,7 +24,7 @@ Features
 * **Type-complete interface**: Enables static type checking and intelligent
   auto-completion suggestions with modern IDEs — reducing type errors and
   improving development speed.
-* **Robust codebase**: 100% coverage spanning 2600+ test cases and fully
+* **Robust codebase**: 100% coverage spanning 2750+ test cases and fully
   type-checked with mypy under `strict mode <https://mypy.readthedocs.io/en/
   stable/getting_started.html#strict-mode-and-configuration>`_.
 
