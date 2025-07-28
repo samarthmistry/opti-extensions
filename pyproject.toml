@@ -1,20 +1,30 @@
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "opti-extensions"
 description = """\
     A collection of custom data structures and user-friendly functions for mathematical \
-    optimization modeling with docplex, gurobipy, and xpress.\
+    optimization modeling with DOcplex, gurobipy, and Xpress.\
 """
+keywords = [
+    "CPLEX",
+    "DOcplex",
+    "Gurobi",
+    "gurobipy",
+    "Xpress",
+    "linear programming",
+    "mixed integer programming",
+    "optimization model",
+]
 readme = "README.md"
-license = { file = "LICENSE" }
+license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE"]
 authors = [{ name = "Samarth Mistry", email = "samarth.mistry@gmail.com" }]
 dynamic = ["version"]
 requires-python = ">=3.10"
 classifiers = [
-    "License :: OSI Approved :: Apache Software License",
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
     "Intended Audience :: Information Technology",
@@ -68,8 +78,9 @@ dev = [
 ]
 
 [project.urls]
-Documentation = "https://opti-extensions.readthedocs.io/en/stable"
-"Source code" = "https://github.com/samarthmistry/opti-extensions"
+Homepage = "https://opti-extensions.readthedocs.io/"
+Documentation = "https://opti-extensions.readthedocs.io/en/stable/#documentation"
+"Source code" = "https://github.com/samarthmistry/opti-extensions/tree/main/src/opti_extensions"
 Changelog = "https://github.com/samarthmistry/opti-extensions/releases"
 
 [tool.setuptools.dynamic]
@@ -193,8 +204,6 @@ exclude_also = [
     "def _get_repr_header", # repr
     "def __repr__",         # repr
     "def _repr_pretty_",    # repr
-    "if TYPE_CHECKING",     # typing
-    "@overload",            # typing
     "except ImportError",   # optional dependency
 ]
 

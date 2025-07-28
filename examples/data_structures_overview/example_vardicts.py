@@ -6,7 +6,7 @@
 VarDict data structures
 =======================
 
-We give an overview of the VarDict data structures provided in `opti-extensions`. They
+We give an overview of the VarDict data structures provided in opti-extensions. They
 are immutable subclasses of Python's dict with some additional functionality.
 
 Suppose we want build a model to solve the facility location problem. We'll define the
@@ -22,7 +22,7 @@ variables for this problem with these data structures.
 # Let's import the classes defining IndexSets, and the function that adds variables based on
 # IndexSets and returns VarDicts
 from opti_extensions import IndexSet1D, IndexSetND
-from opti_extensions.docplex import add_variables
+from opti_extensions.docplex import add_variables, VarDict1D, VarDictND
 
 # We'll also work with dataframes and series
 import pandas as pd
@@ -38,6 +38,17 @@ mdl = Model()
 # ---------
 
 # %%
+# .. tip::
+#
+#     **Type annotations**: Being a subclass of Python's `dict`, `VarDict1D` is also a generic
+#     container type and can be annotated accordingly. Additionally, opti-extensions provides a
+#     type-complete interface, enabling most type checkers and LSPs to infer the type automatically.
+
+# %%
+
+print(issubclass(VarDict1D, dict))
+
+# %%
 # Constructor
 # ^^^^^^^^^^^
 
@@ -48,8 +59,8 @@ mdl = Model()
 # given IndexSet1D and the values will be the corresponding DOcplex variables.
 
 # %%
-# -  | Whether to open facility :math:`j` or not:
-#    | :math:`y_{j} \in \mathbb{B} \quad \forall \; j \in FAC`
+# **Whether to open facility** :math:`j` **or not:**
+# :math:`y_{j} \in \mathbb{B} \quad \forall \; j \in FAC`
 
 # %%
 
@@ -58,8 +69,11 @@ FAC = IndexSet1D(['F1', 'F2', 'F3'])
 
 # Define the set of binary variables indexed over this set
 select_fac = add_variables(mdl, indexset=FAC, vartype='binary')
-# Type annotation of select_fac is `VarDict1D[str, docplex.mp.dvar.Var]`
 print(select_fac)
+
+# %%
+# Type annotation of `select_fac` is `VarDict1D[str, docplex.mp.dvar.Var]`, similar to
+# dict[str, docplex.mp.dvar.Var]`.
 
 # %%
 # `key_name` & `value_name` attributes
@@ -111,8 +125,8 @@ print(s)
 
 # %%
 # VarDict1D is an immutable subclass of python's `dict` i.e., it does not allow any methods that
-# update it once it's created: clear, pop, popitem, setdefault, update, fromkeys. Please refer to
-# the `Mapping operations` and `Views` sections of `API Reference` for more details.
+# update it once it's created: `clear`, `pop`, `popitem`, `setdefault`, `update`, `fromkeys`. Please
+# refer to the `Mapping operations` and `Views` sections of `API Reference` for more details.
 #
 # It provides a special method `lookup` that returns variables for keys present in the
 # VarDict1D and zero for keys not found i.e., equivalent to ``VarDict1D.get(key, 0)``. This is
@@ -171,6 +185,17 @@ print(select_fac.sum_squares())
 # ---------
 
 # %%
+# .. tip::
+#
+#     **Type annotations**: Being a subclass of Python's `dict`, `VarDictND` is also a generic
+#     container type and can be annotated accordingly. Additionally, opti-extensions provides a
+#     type-complete interface, enabling most type checkers and LSPs to infer the type automatically.
+
+# %%
+
+print(issubclass(VarDictND, dict))
+
+# %%
 # Constructor
 # ^^^^^^^^^^^
 
@@ -182,8 +207,8 @@ print(select_fac.sum_squares())
 # variables.
 
 # %%
-# -  | Amount of demand of customer :math:`i` served by facility :math:`j`:
-#    | :math:`x_{i, j} \in \mathbb{R}_{0}^{+} \quad \forall \; (i, j) \in FAC\_CUST`
+# **Amount of demand of customer** :math:`i` **served by facility** :math:`j`:
+# :math:`x_{i, j} \in \mathbb{R}_{0}^{+} \quad \forall \; (i, j) \in FAC\_CUST`
 
 # %%
 
@@ -194,8 +219,11 @@ FAC_CUST = IndexSetND(
 
 # Define the set of continuous variables indexed over this set
 dem_alloc = add_variables(mdl, indexset=FAC_CUST, vartype='continuous')
-# Type annotation of dem_alloc is `VarDict1D[tuple[str, int], docplex.mp.dvar.Var]`
 print(dem_alloc)
+
+# %%
+# Type annotation of `dem_alloc` is `VarDict1D[tuple[str, int], docplex.mp.dvar.Var]`, similar to
+# `dict[tuple[str, int], docplex.mp.dvar.Var]`
 
 # %%
 # `key_names` & `value_name` attributes
@@ -238,7 +266,7 @@ print(dem_alloc.key_names, dem_alloc.value_name)
 # Simple use case
 sol = mdl.new_solution()  # dummy solution; all zeros
 sol_dem_alloc = sol.get_value_dict(dem_alloc)
-s = pd.Series(dem_alloc, name=dem_alloc.value_name).rename_axis(dem_alloc.key_names)
+s = pd.Series(sol_dem_alloc, name=dem_alloc.value_name).rename_axis(dem_alloc.key_names)
 print(s)
 
 # %%
@@ -247,8 +275,8 @@ print(s)
 
 # %%
 # VarDictND is an immutable subclass of python's `dict` i.e., it does not allow any methods that
-# update it once it's created: clear, pop, popitem, setdefault, update, fromkeys. Please refer to
-# the `Mapping operations` and `Views` sections of `API Reference` for more details.
+# update it once it's created: `clear`, `pop`, `popitem`, `setdefault`, `update`, `fromkeys`. Please
+# refer to the `Mapping operations` and `Views` sections of `API Reference` for more details.
 #
 # It provides a special method `lookup` that returns variables for keys present in the
 # VarDictND and zero for keys not found i.e., equivalent to ``VarDictND.get(key, 0)``. This is

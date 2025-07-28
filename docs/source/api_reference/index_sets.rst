@@ -23,6 +23,20 @@ Attributes
 
    IndexSet1D.name
 
+Sequence operations
+-------------------
+.. autosummary::
+
+   IndexSet1D.append
+   IndexSet1D.extend
+   IndexSet1D.insert
+   IndexSet1D.remove
+   IndexSet1D.pop
+   IndexSet1D.clear
+   IndexSet1D.index
+   IndexSet1D.sort
+   IndexSet1D.reverse
+
 Set comparison
 --------------
 
@@ -50,19 +64,37 @@ Set comparison
 
    >>> set_a > set_b
 
-Sequence operations
--------------------
-.. autosummary::
+Set operations
+--------------
 
-   IndexSet1D.append
-   IndexSet1D.extend
-   IndexSet1D.insert
-   IndexSet1D.remove
-   IndexSet1D.pop
-   IndexSet1D.clear
-   IndexSet1D.index
-   IndexSet1D.sort
-   IndexSet1D.reverse
+* If two sets are disjoint or not:
+
+   >>> set_a.isdisjoint(set_b)
+
+* Union of two or more sets:
+
+   >>> set_a.union(set_b, ...)
+   >>> set_a | set_b | ...
+
+* Intersection of two or more sets:
+
+   >>> set_a.intersection(set_b, ...)
+   >>> set_a & set_b & ...
+
+* Difference of two or more sets:
+
+   >>> set_a.difference(set_b, ...)
+   >>> set_a - set_b - ...
+
+* Symmetric difference of two sets:
+
+   >>> set_a.symmetric_difference(set_b)
+   >>> set_a ^ set_b
+
+Just like `set`, the non-operator versions of union(), intersection(),
+difference(), and symmetric_difference() methods will accept any iterable as
+an argument. In contrast, their operator based counterparts require their
+arguments to be IndexSet1D.
 
 Dunder methods
 --------------
@@ -100,6 +132,20 @@ Efficient subset selection
 
    IndexSetND.subset
    IndexSetND.squeeze
+
+Sequence operations
+-------------------
+.. autosummary::
+
+   IndexSetND.append
+   IndexSetND.extend
+   IndexSetND.insert
+   IndexSetND.remove
+   IndexSetND.pop
+   IndexSetND.clear
+   IndexSetND.index
+   IndexSetND.sort
+   IndexSetND.reverse
 
 Set comparison
 --------------
@@ -147,19 +193,37 @@ Set comparison
 
    >>> set_a > set_b
 
-Sequence operations
--------------------
-.. autosummary::
+Set operations
+--------------
 
-   IndexSetND.append
-   IndexSetND.extend
-   IndexSetND.insert
-   IndexSetND.remove
-   IndexSetND.pop
-   IndexSetND.clear
-   IndexSetND.index
-   IndexSetND.sort
-   IndexSetND.reverse
+* If two sets are disjoint or not:
+
+   >>> set_a.isdisjoint(set_b)
+
+* Union of two or more sets:
+
+   >>> set_a.union(set_b, ...)
+   >>> set_a | set_b | ...
+
+* Intersection of two or more sets:
+
+   >>> set_a.intersection(set_b, ...)
+   >>> set_a & set_b & ...
+
+* Difference of two or more sets:
+
+   >>> set_a.difference(set_b, ...)
+   >>> set_a - set_b - ...
+
+* Symmetric difference of two sets:
+
+   >>> set_a.symmetric_difference(set_b)
+   >>> set_a ^ set_b
+
+Just like `set`, the non-operator versions of union(), intersection(),
+difference(), and symmetric_difference() methods will accept any iterable as
+an argument. In contrast, their operator based counterparts require their
+arguments to be IndexSetND.
 
 Dunder methods
 --------------

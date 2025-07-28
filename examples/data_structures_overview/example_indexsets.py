@@ -6,7 +6,7 @@
 IndexSet data structures
 ========================
 
-We give an overview of the IndexSet data structures provided in `opti-extensions`. They
+We give an overview of the IndexSet data structures provided in opti-extensions. They
 operate exactly like Python's list (but require all elements to be unique) and have some
 additional functionality.
 
@@ -19,6 +19,9 @@ sets for this problem with these data structures.
 # Let's import the classes defining IndexSets
 from opti_extensions import IndexSet1D, IndexSetND
 
+# To show subclass
+import collections.abc
+
 # To show fail cases
 import traceback
 
@@ -28,6 +31,17 @@ import pandas as pd
 # %%
 # IndexSet1D
 # ----------
+
+# %%
+# .. tip::
+#
+#     **Type annotations**: Like Python's `list`, `IndexSet1D` is a generic container type and can
+#     be annotated accordingly. Additionally, opti-extensions provides a type-complete interface,
+#     enabling most type checkers and LSPs to infer the type automatically.
+
+# %%
+
+print(issubclass(IndexSet1D, collections.abc.MutableSequence))
 
 # %%
 # Constructor
@@ -40,15 +54,16 @@ import pandas as pd
 # such as `int`, `str`, `pd.Timestamp`, etc.
 
 # %%
-# -  | Customers to be served, described by id(s):
-#    | :math:`i \in CUST`
+# **Set of customers to be served, described by id(s):** :math:`i \in CUST`
 
 # %%
 
 # If we want to define for a range on numbers
 CUST = IndexSet1D(range(5))
-# Type annotation of CUST is `IndexSet1D[int]`
 print(CUST)
+
+# %%
+# Type annotation of `CUST` is `IndexSet1D[int]`, similar to `list[int]`.
 
 # %%
 
@@ -57,15 +72,16 @@ CUST = IndexSet1D([1, 2, 3, 4, 5])  # IndexSet1D((1, 2, 3, 4, 5)) # IndexSet1D({
 print(CUST)
 
 # %%
-# -  | Facilities to consider, described by code(s):
-#    | :math:`j \in FAC`
+# **Set of facilities to consider, described by code(s):** :math:`j \in FAC`
 
 # %%
 
 # If we want to define for a sequence of strings
 FAC = IndexSet1D(['F1', 'F2', 'F3'])
-# Type annotation of FAC is `IndexSet1D[str]`
 print(FAC)
+
+# %%
+# Type annotation of `FAC` is `IndexSet1D[str]`, similar to `list[str]`.
 
 # %%
 # Fail cases
@@ -137,18 +153,33 @@ print(s)
 # ^^^^^^^^^^^^^
 
 # %%
-# It supports all methods of python's `list`. Please refer to the
+# (1) It supports all methods of `list`. Please refer to the
 # `Sequence operations <../../api_reference/index_sets.html#sequence-operations>`__ and
-# `Dunder methods <../../api_reference/index_sets.html#dunder-methods>`__ sections of
+# `Dunder methods <../../api_reference/index_sets.html#dunder-methods>`__ sections
+# of `API Reference` for more details.
+#
+# (2) It supports rich comparisons like `set`. Please refer to the
+# `Set comparison <../../api_reference/index_sets.html#set-comparison>`__ section of
 # `API Reference` for more details.
 #
-# It also supports rich/symbolic comparisons like python's `set`. Please refer to the
-# `Set comparison <../../api_reference/index_sets.html#set-comparison>`__ section of
+# (3) It supports set operations like `set`. Please refer to the
+# `Set operations <../../api_reference/index_sets.html#set-operations>`__ section of
 # `API Reference` for more details.
 
 # %%
 # IndexSetND
 # ----------
+
+# %%
+# .. tip::
+#
+#     **Type annotations**: Like Python's `list`, `IndexSetND` is a generic container type and can
+#     be annotated accordingly. Additionally, opti-extensions provides a type-complete interface,
+#     enabling most type checkers and LSPs to infer the type automatically.
+
+# %%
+
+print(issubclass(IndexSetND, collections.abc.MutableSequence))
 
 # %%
 # Constructor
@@ -161,8 +192,7 @@ print(s)
 # length).
 
 # %%
-# -  | Allowable combinations of facilities and customers:
-#    | :math:`(i, j) \in FAC\_CUST`
+# **Set of allowable combinations of facilities and customers:** :math:`(i, j) \in FAC\_CUST`
 
 # %%
 
@@ -170,8 +200,11 @@ print(s)
 FAC_CUST = IndexSetND(
     [('F1', 1), ('F1', 2), ('F2', 1), ('F2', 2), ('F3', 1), ('F3', 2)],
 )
-# Type annotation of FAC_CUST is `IndexSetND[tuple[str, int]]`
 print(FAC_CUST)
+
+# %%
+# Type annotation of `FAC_CUST` is `IndexSetND[tuple[str, int]]`, similar to
+# `list[tuple[str, int]]`.
 
 # %%
 
@@ -260,13 +293,17 @@ print(df)
 # ^^^^^^^^^^^^^
 
 # %%
-# It supports all methods of python's `list`. Please refer to the
-# `Sequence operations <../../api_reference/index_sets.html#id4>`__ and
-# `Dunder methods <../../api_reference/index_sets.html#id5>`__ sections
+# (1) It supports all methods of `list`. Please refer to the
+# `Sequence operations <../../api_reference/index_sets.html#id3>`__ and
+# `Dunder methods <../../api_reference/index_sets.html#id6>`__ sections
 # of `API Reference` for more details.
 #
-# It also supports rich/symbolic comparisons like python's `set`. Please refer to the
-# `Set comparison <../../api_reference/index_sets.html#id3>`__ section of
+# (2) It supports rich comparisons like `set`. Please refer to the
+# `Set comparison <../../api_reference/index_sets.html#id4>`__ section of
+# `API Reference` for more details.
+#
+# (3) It supports set operations like `set`. Please refer to the
+# `Set operations <../../api_reference/index_sets.html#id5>`__ section of
 # `API Reference` for more details.
 
 
@@ -360,16 +397,20 @@ print(f'Execution time: {1000 * sum(times) / len(times):08.3f} ms')
 
 # %%
 
-# From FAC_CUST (a 2-dimensional set), if we want to get an IndexSet of all
-# unique values at the first dimension (i.e., at dimension 0 because Python
-# uses zero-based indexing)
+# From FAC_CUST (a 2-dimensional set), if we want to get an IndexSet of all unique values at the
+# first dimension (i.e., at dimension 0 because Python uses zero-based indexing)
+#
+# equivalent to: IndexSet1D(set(i for i, j in FAC_CUST))
+#
 print(FAC_CUST.squeeze(0))
 
 # %%
 
-# From FAC_CUST (a 2-dimensional set), if we want to get an IndexSet of all
-# unique values at the second dimension (i.e., at dimension 1 because Python
-# uses zero-based indexing)
+# From FAC_CUST (a 2-dimensional set), if we want to get an IndexSet of all unique values at the
+# second dimension (i.e., at dimension 1 because Python uses zero-based indexing)
+#
+# equivalent to: IndexSet1D(set(j for i, j in FAC_CUST), name='CUST')
+#
 print(FAC_CUST.squeeze(1, names=['CUST']))
 
 # %%
@@ -378,11 +419,16 @@ print(FAC_CUST.squeeze(1, names=['CUST']))
 
 # %%
 # opti-extensions provides optional functionality to directly cast pandas Series/DataFrame/Index
-# objects into IndexSet data structures.  If pandas is present in the python environment, this
+# objects into IndexSet data structures. If pandas is present in the python environment, this
 # functionality will be registered with a custom ``.opti`` accessor when opti-extensions is
 # imported.
+
+# %%
+# .. tip::
 #
-# Note: The opti-extensions package has to be imported first to use this method with pandas.
+#     **Type annotations**: Since this functionality is registered at runtime, Python type checkers
+#     and LSPs that use static type checking cannot automatically infer the types. The user will
+#     need to annotate the IndexSet data structures created through these methods for type checking.
 
 # %%
 

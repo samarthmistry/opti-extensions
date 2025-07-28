@@ -33,7 +33,9 @@ if TYPE_CHECKING:
 
 ElemT = TypeVar('ElemT')
 Elem1DT = TypeVar('Elem1DT')
+Elem1DU = TypeVar('Elem1DU')
 ElemNDT = TypeVar('ElemNDT', bound=tuple[Any, ...])
+ElemNDU = TypeVar('ElemNDU', bound=tuple[Any, ...])
 IndexGroup: TypeAlias = defaultdict[tuple[Any, ...], list[ElemT]]
 
 _T1 = TypeVar('_T1', str, int, date, datetime, 'Timestamp')
@@ -477,6 +479,19 @@ class IndexSetBase(Generic[ElemT]):
         """Reverse the order of elements of the IndexSet, in-place."""
         self._list.reverse()
 
+    def isdisjoint(self, other: Iterable[Any]) -> bool:
+        """Whether the IndexSet has no elements in common with another iterable, or not.
+
+        Parameters
+        ----------
+        other : iterable
+
+        Returns
+        -------
+        bool
+        """
+        return self._set.isdisjoint(other)
+
 
 class IndexSet1D(IndexSetBase[Elem1DT]):
     """Custom list-like data structure to define index-sets with 1-dim scalar elements.
@@ -626,6 +641,134 @@ class IndexSet1D(IndexSetBase[Elem1DT]):
         self._check_allscalars(elems)
         return True
 
+    def intersection(self, *others: Iterable[Any]) -> IndexSet1D[Elem1DT]:
+        """Return a new IndexSet1D with elements common to the IndexSet1D and all others.
+
+        The new IndexSet1D will have the same `name` attribute as the original.
+
+        Parameters
+        ----------
+        *others : iterable
+
+        Returns
+        -------
+        IndexSet1D
+        """
+        return IndexSet1D(self._set.intersection(*others), name=self.name)
+
+    def union(self, *others: Iterable[Elem1DU]) -> IndexSet1D[Elem1DT | Elem1DU]:
+        """Return a new IndexSet1D with elements from the IndexSet1D and all others.
+
+        The new IndexSet1D will have the same `name` attribute as the original.
+
+        Parameters
+        ----------
+        *others : iterable
+
+        Returns
+        -------
+        IndexSet1D
+        """
+        return IndexSet1D(self._set.union(*others), name=self.name)
+
+    def difference(self, *others: Iterable[Any]) -> IndexSet1D[Elem1DT]:
+        """Return a new IndexSet1D with elements in the IndexSet1D that are not in the others.
+
+        The new IndexSet1D will have the same `name` attribute as the original.
+
+        Parameters
+        ----------
+        *others : iterable
+
+        Returns
+        -------
+        IndexSet1D
+        """
+        return IndexSet1D(self._set.difference(*others), name=self.name)
+
+    def symmetric_difference(self, other: Iterable[Elem1DT]) -> IndexSet1D[Elem1DT]:
+        """Return a new IndexSet1D with elements in either the IndexSet1D or other but not both.
+
+        The new IndexSet1D will have the same `name` attribute as the original.
+
+        Parameters
+        ----------
+        other : iterable
+
+        Returns
+        -------
+        IndexSet1D
+        """
+        return IndexSet1D(self._set.symmetric_difference(other), name=self.name)
+
+    def __and__(self, other: IndexSet1D[Elem1DT]) -> IndexSet1D[Elem1DT]:
+        # Set operation `self & other` (intersection), if other is also of the same type.
+        # Returns a new instance with the same `name` attribute.
+        if not isinstance(other, IndexSet1D):
+            self._raise_op_not_supported_err('&')
+        return IndexSet1D(self._set & other._set, name=self.name)
+
+    def __iand__(self, other: IndexSet1D[Elem1DT]) -> IndexSet1D[Elem1DT]:
+        # In-place set operation `self &= other` (intersection), if other is also of the same type.
+        if not isinstance(other, IndexSet1D):
+            self._raise_op_not_supported_err('&=')
+
+        self._set &= other._set
+        self._list = list(self._set)
+
+        return self
+
+    def __or__(self, other: IndexSet1D[Elem1DT]) -> IndexSet1D[Elem1DT]:
+        # Set operation `self | other` (union), if other is also of the same type.
+        # Returns a new instance with the same `name` attribute.
+        if not isinstance(other, IndexSet1D):
+            self._raise_op_not_supported_err('|')
+        return IndexSet1D(self._set | other._set, name=self.name)
+
+    def __ior__(self, other: IndexSet1D[Elem1DT]) -> IndexSet1D[Elem1DT]:
+        # In-place set operation `self |= other` (union), if other is also of the same type.
+        if not isinstance(other, IndexSet1D):
+            self._raise_op_not_supported_err('|=')
+
+        self._set |= other._set
+        self._list = list(self._set)
+
+        return self
+
+    def __sub__(self, other: IndexSet1D[Elem1DT]) -> IndexSet1D[Elem1DT]:
+        # Set operation `self - other` (difference), if other is also of the same type.
+        # Returns a new instance with the same `name` attribute.
+        if not isinstance(other, IndexSet1D):
+            self._raise_op_not_supported_err('-')
+        return IndexSet1D(self._set - other._set, name=self.name)
+
+    def __isub__(self, other: IndexSet1D[Elem1DT]) -> IndexSet1D[Elem1DT]:
+        # In-place set operation `self -= other` (difference), if other is also of the same type.
+        if not isinstance(other, IndexSet1D):
+            self._raise_op_not_supported_err('-=')
+
+        self._set -= other._set
+        self._list = list(self._set)
+
+        return self
+
+    def __xor__(self, other: IndexSet1D[Elem1DT]) -> IndexSet1D[Elem1DT]:
+        # Set operation `self ^ other` (symmetric difference), if other is also of the same type.
+        # Returns a new instance with the same `name` attribute.
+        if not isinstance(other, IndexSet1D):
+            self._raise_op_not_supported_err('^')
+        return IndexSet1D(self._set ^ other._set, name=self.name)
+
+    def __ixor__(self, other: IndexSet1D[Elem1DT]) -> IndexSet1D[Elem1DT]:
+        # In-place set operation `self ^= other` (sym diff), if other is also of the same type.
+        if not isinstance(other, IndexSet1D):
+            self._raise_op_not_supported_err('^=')
+
+        self._set ^= other._set
+        self._list = list(self._set)
+
+        return self
+
     # Inheriting from Generic causes `inspect.signature` to return the signature of Generic's
     # `__new__` for this class (instead of its own `__init__`). This side-effect leads to an
     # incorrect call signature and return annotation output when calling `help` function for
@@ -732,10 +875,10 @@ class IndexSetND(IndexSetBase[ElemNDT]):
 
     __slots__ = ('_names', '_tuplelen', '_index_groups')
 
-    @overload  # 2
+    @overload  # 2 / 3 / 4 / 5 / ...
     def __init__(
-        self: IndexSetND[tuple[_T1, _T2]],
-        __iterable: Iterable[tuple[_T1, _T2]],
+        self: Self,
+        __iterable: Iterable[ElemNDT],
         *,
         names: Sequence[str] | None = ...,
     ) -> None: ...
@@ -745,14 +888,6 @@ class IndexSetND(IndexSetBase[ElemNDT]):
         self: IndexSetND[tuple[_T1, _T2]],
         __iterable1: Iterable[_T1],
         __iterable2: Iterable[_T2],
-        *,
-        names: Sequence[str] | None = ...,
-    ) -> None: ...
-
-    @overload  # 3
-    def __init__(
-        self: IndexSetND[tuple[_T1, _T2, _T3]],
-        __iterable: Iterable[tuple[_T1, _T2, _T3]],
         *,
         names: Sequence[str] | None = ...,
     ) -> None: ...
@@ -781,14 +916,6 @@ class IndexSetND(IndexSetBase[ElemNDT]):
         __iterable1: Iterable[_T1],
         __iterable2: Iterable[_T2],
         __iterable3: Iterable[_T3],
-        *,
-        names: Sequence[str] | None = ...,
-    ) -> None: ...
-
-    @overload  # 4
-    def __init__(
-        self: IndexSetND[tuple[_T1, _T2, _T3, _T4]],
-        __iterable: Iterable[tuple[_T1, _T2, _T3, _T4]],
         *,
         names: Sequence[str] | None = ...,
     ) -> None: ...
@@ -847,14 +974,6 @@ class IndexSetND(IndexSetBase[ElemNDT]):
         __iterable2: Iterable[_T2],
         __iterable3: Iterable[_T3],
         __iterable4: Iterable[_T4],
-        *,
-        names: Sequence[str] | None = ...,
-    ) -> None: ...
-
-    @overload  # 5
-    def __init__(
-        self: IndexSetND[tuple[_T1, _T2, _T3, _T4, _T5]],
-        __iterable: Iterable[tuple[_T1, _T2, _T3, _T4, _T5]],
         *,
         names: Sequence[str] | None = ...,
     ) -> None: ...
@@ -1208,6 +1327,162 @@ class IndexSetND(IndexSetBase[ElemNDT]):
             del self._tuplelen
         except AttributeError:
             pass
+
+    def intersection(self, *others: Iterable[Any]) -> IndexSetND[ElemNDT]:
+        """Return a new IndexSetND with elements common to the IndexSetND and all others.
+
+        The new IndexSetND will have the same `names` attribute as the original.
+
+        Parameters
+        ----------
+        *others : iterable
+
+        Returns
+        -------
+        IndexSetND
+        """
+        return IndexSetND(self._set.intersection(*others), names=self.names)
+
+    def union(self, *others: Iterable[ElemNDU]) -> IndexSetND[ElemNDT | ElemNDU]:
+        """Return a new IndexSetND with elements from the IndexSetND and all others.
+
+        The new IndexSetND will have the same `names` attribute as the original.
+
+        Parameters
+        ----------
+        *others : iterable
+
+        Returns
+        -------
+        IndexSetND
+        """
+        return IndexSetND(self._set.union(*others), names=self.names)
+
+    def difference(self, *others: Iterable[ElemNDT]) -> IndexSetND[ElemNDT]:
+        """Return a new IndexSetND with elements in the IndexSetND that are not in the others.
+
+        The new IndexSetND will have the same `names` attribute as the original.
+
+        Parameters
+        ----------
+        *others : iterable
+
+        Returns
+        -------
+        IndexSetND
+        """
+        return IndexSetND(self._set.difference(*others), names=self.names)
+
+    def symmetric_difference(self, other: Iterable[ElemNDT]) -> IndexSetND[ElemNDT]:
+        """Return a new IndexSetND with elements in either the IndexSetND or other but not both.
+
+        The new IndexSetND will have the same `names` attribute as the original.
+
+        Parameters
+        ----------
+        other : iterable
+
+        Returns
+        -------
+        IndexSetND
+        """
+        return IndexSetND(self._set.symmetric_difference(other), names=self.names)
+
+    def __and__(self, other: IndexSetND[ElemNDT]) -> IndexSetND[ElemNDT]:
+        # Set operation `self & other` (intersection), if other is also of the same type.
+        # Returns a new instance with the same `names` attribute.
+        if not isinstance(other, IndexSetND):
+            self._raise_op_not_supported_err('&')
+
+        if other:  # is pouplated
+            self._validate_elements(other._list)
+
+        return IndexSetND(self._set & other._set, names=self.names)
+
+    def __iand__(self, other: IndexSetND[ElemNDT]) -> IndexSetND[ElemNDT]:
+        # In-place set operation `self &= other` (intersection), if other is also of the same type.
+        if not isinstance(other, IndexSetND):
+            self._raise_op_not_supported_err('&=')
+
+        if other:  # is pouplated
+            self._validate_elements(other._list)
+
+        self._set &= other._set
+        self._list = list(self._set)
+
+        return self
+
+    def __or__(self, other: IndexSetND[ElemNDT]) -> IndexSetND[ElemNDT]:
+        # Set operation `self | other` (union), if other is also of the same type.
+        # Returns a new instance with the same `names` attribute.
+        if not isinstance(other, IndexSetND):
+            self._raise_op_not_supported_err('|')
+
+        if other:  # is pouplated
+            self._validate_elements(other._list)
+
+        return IndexSetND(self._set | other._set, names=self.names)
+
+    def __ior__(self, other: IndexSetND[ElemNDT]) -> IndexSetND[ElemNDT]:
+        # In-place set operation `self |= other` (union), if other is also of the same type.
+        if not isinstance(other, IndexSetND):
+            self._raise_op_not_supported_err('|=')
+
+        if other:  # is pouplated
+            self._validate_elements(other._list)
+
+        self._set |= other._set
+        self._list = list(self._set)
+
+        return self
+
+    def __sub__(self, other: IndexSetND[ElemNDT]) -> IndexSetND[ElemNDT]:
+        # Set operation `self - other` (difference), if other is also of the same type.
+        # Returns a new instance with the same `names` attribute.
+        if not isinstance(other, IndexSetND):
+            self._raise_op_not_supported_err('-')
+
+        if other:  # is pouplated
+            self._validate_elements(other._list)
+
+        return IndexSetND(self._set - other._set, names=self.names)
+
+    def __isub__(self, other: IndexSetND[ElemNDT]) -> IndexSetND[ElemNDT]:
+        # In-place set operation `self -= other` (difference), if other is also of the same type.
+        if not isinstance(other, IndexSetND):
+            self._raise_op_not_supported_err('-=')
+
+        if other:  # is pouplated
+            self._validate_elements(other._list)
+
+        self._set -= other._set
+        self._list = list(self._set)
+
+        return self
+
+    def __xor__(self, other: IndexSetND[ElemNDT]) -> IndexSetND[ElemNDT]:
+        # Set operation `self ^ other` (symmetric difference), if other is also of the same type.
+        # Returns a new instance with the same `names` attribute.
+        if not isinstance(other, IndexSetND):
+            self._raise_op_not_supported_err('^')
+
+        if other:  # is pouplated
+            self._validate_elements(other._list)
+
+        return IndexSetND(self._set ^ other._set, names=self.names)
+
+    def __ixor__(self, other: IndexSetND[ElemNDT]) -> IndexSetND[ElemNDT]:
+        # In-place set operation `self ^= other` (sym diff), if other is also of the same type.
+        if not isinstance(other, IndexSetND):
+            self._raise_op_not_supported_err('^=')
+
+        if other:  # is pouplated
+            self._validate_elements(other._list)
+
+        self._set ^= other._set
+        self._list = list(self._set)
+
+        return self
 
     def _groupby(self, *indices: int) -> IndexGroup[ElemNDT]:
         """Group subsets of the IndexSet that correspond to given dimension indices.
