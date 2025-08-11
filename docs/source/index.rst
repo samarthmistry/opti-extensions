@@ -26,7 +26,15 @@ Features
   improving development speed.
 * **Robust codebase**: 100% coverage spanning 2750+ test cases and fully
   type-checked with mypy under `strict mode <https://mypy.readthedocs.io/en/
-  stable/getting_started.html#strict-mode-and-configuration>`_.
+  stable/getting_started.html#strict-mode-and-configuration>`_. Tested with:
+
+  * CPLEX versions: 20.1.0, 22.1.0, 22.1.1, 22.1.2
+  * Gurobi versions: 11.0, 12.0
+    (most likely works with 10.0 but `cannot test <https://support.gurobi.
+    com/hc/en-us/articles/19487474933521-How-do-I-resolve-the-error-License
+    -expired-2024-10-28>`_ with the size-limited license provided with
+    gurobipy distributed via PyPI)
+  * Xpress versions: 9.4, 9.5, 9.6, 9.7
 
 Documentation
 =============
