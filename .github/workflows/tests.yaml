@@ -25,12 +25,14 @@ jobs:
           MAIN_SHA=$(git rev-parse origin/main)
           echo "main_sha=$MAIN_SHA" >> $GITHUB_ENV
 
-      - name: Check for changed python files
+      - name: Check for changed python files or pyproject.toml
         id: changed-py-files
         uses: tj-actions/changed-files@v46
         with:
           base_sha: ${{ env.main_sha }}
-          files: '**/*.py'
+          files: |
+            '**/*.py'
+            'pyproject.toml'
 
     outputs:
       any_changed: ${{ steps.changed-py-files.outputs.any_changed }}
