@@ -229,6 +229,7 @@ env_list = [
     "xprs94",
     "xprs95",
     "xprs96",
+    "xprs97",
 ]
 
 [tool.tox.gh.python]
@@ -247,6 +248,7 @@ env_list = [
     "xprs94",
     "xprs95",
     "xprs96",
+    "xprs97",
 ]
 "3.11" = ["py311"]
 "3.12" = ["py312"]
@@ -486,6 +488,23 @@ commands = [
 description = "Run unit tests for model functions against Xpress 9.6"
 base_python = ["3.10"]
 deps = ["xpress>=9.6,<9.7"]
+extras = ["tests"]
+commands = [
+    [
+        "pytest",
+        "--basetemp={env_tmp_dir}",
+        "--no-cov",
+        "tests{/}unit_tests{/}xpress_var_dicts_funcs{/}",
+        "tests{/}functional_tests{/}xpress_diet_test.py",
+        "tests{/}functional_tests{/}xpress_multicommodity_test.py",
+        { replace = "posargs", extend = true },
+    ],
+]
+
+[tool.tox.env.xprs97]
+description = "Run unit tests for model functions against Xpress 9.7"
+base_python = ["3.10"]
+deps = ["xpress>=9.7,<9.8"]
 extras = ["tests"]
 commands = [
     [
