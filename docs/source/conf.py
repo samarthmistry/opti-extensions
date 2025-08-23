@@ -6,6 +6,7 @@
 # Project information
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
+import inspect
 import os
 import re
 import sys
@@ -14,14 +15,14 @@ from datetime import datetime
 import sphinx_autosummary_accessors
 from sphinx_gallery.sorting import ExplicitOrder
 
-from opti_extensions import __version__
+import opti_extensions
 
 sys.path.insert(0, os.path.abspath('..'))
 
 project = 'opti-extensions'
 copyright = f'{datetime.now().year}, Samarth Mistry'
 author = 'Samarth Mistry'
-release = version = __version__
+release = version = opti_extensions.__version__
 
 # General configuration
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
@@ -29,6 +30,7 @@ release = version = __version__
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.autosummary',
+    'sphinx.ext.linkcode',
     'sphinx_autosummary_accessors',
     'sphinx_design',
     'sphinx_gallery.gen_gallery',
@@ -132,6 +134,58 @@ numpydoc_validation_overrides = {
         '^Preprocess ',  # _var_funcs._preprocess_bound
     ],
 }
+
+
+# linkcode configuration
+# https://www.sphinx-doc.org/en/master/usage/extensions/linkcode.html#confval-linkcode_resolve
+# based on pandas implementation: https://github.com/pandas-dev/pandas/blob/main/doc/source/conf.py#L645
+
+
+def linkcode_resolve(domain, info) -> str | None:
+    """Determine the URL corresponding to Python object."""
+    if domain != 'py':
+        return None
+
+    obj = sys.modules.get(info['module'])
+    if obj is None:
+        return None
+
+    for part in info['fullname'].split('.'):
+        try:
+            obj = getattr(obj, part)
+        except AttributeError:
+            return None
+
+    try:
+        fn = inspect.getsourcefile(inspect.unwrap(obj))
+    except TypeError:
+        try:  # property
+            fn = inspect.getsourcefile(inspect.unwrap(obj.fget))
+        except (AttributeError, TypeError):
+            fn = None
+    if not fn:
+        return None
+
+    try:
+        source, lineno = inspect.getsourcelines(obj)
+    except TypeError:
+        try:  # property
+            source, lineno = inspect.getsourcelines(obj.fget)
+        except (AttributeError, TypeError):
+            source, lineno = None, None
+    except OSError:
+        source, lineno = None, None
+
+    if source and lineno:
+        linespec = f'#L{lineno}-L{lineno + len(source) - 1}'
+    else:
+        linespec = ''
+
+    fn = os.path.relpath(fn, start=os.path.dirname(opti_extensions.__file__))
+
+    gh_proj_url = 'https://github.com/samarthmistry/opti-extensions'
+    return f'{gh_proj_url}/blob/v{version}/src/opti_extensions/{fn}{linespec}'
+
 
 # autodoc configuration
 # https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html
