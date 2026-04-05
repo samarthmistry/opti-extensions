@@ -160,7 +160,7 @@ def test_diet():
     prob.optimize()
 
     _obj = f'Objective={round(prob.attributes.objval, 2):.2f}'
-    _val = '\n'.join(f'{idx}={int(prob.getSolution(var))}' for idx, var in buy.items())
+    _val = '\n'.join(f'{idx}={int(round(prob.getSolution(var), 3))}' for idx, var in buy.items())
 
     sol_str = f'{_obj}\n{_val}'
     assert sol_str.split('\n') == [

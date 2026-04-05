@@ -168,7 +168,7 @@ def test_multicommodity():
     solvestatus, solstatus = prob.optimize()
 
     _obj = f'Objective={round(prob.attributes.objval, 2):.2f}'
-    _val1 = '\n'.join(f'{idx}={int(prob.getSolution(var))}' for idx, var in use.items())
+    _val1 = '\n'.join(f'{idx}={int(round(prob.getSolution(var), 3))}' for idx, var in use.items())
     _val2 = '\n'.join(
         f'{idx}={round(prob.getSolution(var) + 1e-6, 2):.2f}' for idx, var in trans.items()
     )
