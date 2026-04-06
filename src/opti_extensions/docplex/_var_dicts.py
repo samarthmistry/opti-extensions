@@ -26,7 +26,7 @@ VarT = TypeVar('VarT', bound=Var)
 class VarDictCore(VarDictBase[ElemT, VarT]):
     """Base class for custom subclasses of `dict` to define DOcplex model variables.
 
-    Provides runtime type checks to ensure variables are `gurobipy.Var` objects.
+    Provides runtime type checks to ensure variables are `docplex.mp.dvar.Var` objects.
 
     Parameters
     ----------
