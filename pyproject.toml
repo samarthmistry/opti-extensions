@@ -229,10 +229,12 @@ env_list = [
     "cpx2211",
     "cpx2212",
     "grb12",
+    "grb13",
     "xprs94",
     "xprs95",
     "xprs96",
     "xprs97",
+    "xprs98",
 ]
 
 [tool.tox.gh.python]
@@ -240,17 +242,19 @@ env_list = [
     "py310",
     "mypy",
     "pd15",
-    "pd20",
-    "pdX",
+    "pd2",
+    "pd3",
     "cpx2010",
     "cpx2210",
     "cpx2211",
     "cpx2212",
     "grb12",
+    "grb13",
     "xprs94",
     "xprs95",
     "xprs96",
     "xprs97",
+    "xprs98",
 ]
 "3.11" = ["py311"]
 "3.12" = ["py312"]
@@ -295,7 +299,7 @@ commands = [["mypy", "src"], ["mypy", "tests{/}typing_tests"]]
 [tool.tox.env.pd15]
 description = "Run unit tests and doctests for pandas accessors against pandas 1.5"
 base_python = ["3.10"]
-deps = ["pandas==1.5.0", "numpy<2.0"]
+deps = ["pandas>=1.5,<2", "numpy<2.0"]
 commands = [
     [
         "pytest",
@@ -310,10 +314,10 @@ commands = [
     ],
 ]
 
-[tool.tox.env.pd20]
-description = "Run unit tests and doctests for pandas accessors against pandas 2.0"
+[tool.tox.env.pd2]
+description = "Run unit tests and doctests for pandas accessors against pandas 2"
 base_python = ["3.10"]
-deps = ["pandas==2.0.0", "numpy<2.0"]
+deps = ["pandas>=2,<3"]
 commands = [
     [
         "pytest",
@@ -328,10 +332,10 @@ commands = [
     ],
 ]
 
-[tool.tox.env.pdX]
-description = "Run unit tests and doctests for pandas accessors against pandas latest"
-base_python = ["3.10"]
-deps = ["pandas"]
+[tool.tox.env.pd3]
+description = "Run unit tests and doctests for pandas accessors against pandas 3"
+base_python = ["3.12"]
+deps = ["pandas>=3,<4"]
 commands = [
     [
         "pytest",
@@ -435,6 +439,23 @@ commands = [
     ],
 ]
 
+[tool.tox.env.grb13]
+description = "Run unit tests for model functions against Gurobi 13"
+base_python = ["3.10"]
+deps = ["gurobipy>=13,<14"]
+extras = ["tests"]
+commands = [
+    [
+        "pytest",
+        "--basetemp={env_tmp_dir}",
+        "--no-cov",
+        "tests{/}unit_tests{/}gurobipy_var_dicts_funcs{/}",
+        "tests{/}functional_tests{/}gurobipy_diet_test.py",
+        "tests{/}functional_tests{/}gurobipy_multicommodity_test.py",
+        { replace = "posargs", extend = true },
+    ],
+]
+
 [tool.tox.env.xprs94]
 description = "Run unit tests for model functions against Xpress 9.4"
 base_python = ["3.10"]
@@ -490,6 +511,23 @@ commands = [
 description = "Run unit tests for model functions against Xpress 9.7"
 base_python = ["3.10"]
 deps = ["xpress>=9.7,<9.8"]
+extras = ["tests"]
+commands = [
+    [
+        "pytest",
+        "--basetemp={env_tmp_dir}",
+        "--no-cov",
+        "tests{/}unit_tests{/}xpress_var_dicts_funcs{/}",
+        "tests{/}functional_tests{/}xpress_diet_test.py",
+        "tests{/}functional_tests{/}xpress_multicommodity_test.py",
+        { replace = "posargs", extend = true },
+    ],
+]
+
+[tool.tox.env.xprs98]
+description = "Run unit tests for model functions against Xpress 9.8"
+base_python = ["3.10"]
+deps = ["xpress>=9.8,<9.9"]
 extras = ["tests"]
 commands = [
     [
