@@ -20,18 +20,21 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.10'
-          cache: 'pip'
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@cec208311dfd045dd5311c1add060b2062131d57 # v8.0.0
+        with:
+          version: "0.11.3"
+          enable-cache: true
 
       - name: Install project and dependencies
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install ".[dev, solver-apis]"
+        run: uv pip install --system ".[dev, solver-apis]"
 
       - name: Lint with Ruff
         # Will FAIL if any unfixable lint rule is violated
@@ -56,7 +59,7 @@ jobs:
 
       - name: Push file changes from Ruff
         if: steps.verify-ruff-change.outputs.files_changed == 'true'
-        uses: ad-m/github-push-action@master
+        uses: ad-m/github-push-action@v1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           branch: ${{ github.head_ref }}
@@ -74,10 +77,12 @@ jobs:
 
       - name: Generate coverage report from unit tests
         # Will FAIL if measured coverage is below 100%
-        run: pytest tests/unit_tests/ --no-summary --cov-fail-under 100
+        run: pytest tests/unit_tests/ --no-summary --cov-report=xml --cov-fail-under 100
 
       - name: Generate badge file from coverage report
-        uses: tj-actions/coverage-badge-py@v2
+        run: |
+          uv pip install --system genbadge[coverage]
+          genbadge coverage -i coverage.xml -o coverage.svg
 
       - name: Check for badge file change
         uses: tj-actions/verify-changed-files@v20
@@ -95,7 +100,7 @@ jobs:
 
       - name: Push badge file change
         if: steps.verify-covbadge-change.outputs.files_changed == 'true'
-        uses: ad-m/github-push-action@master
+        uses: ad-m/github-push-action@v1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           branch: ${{ github.head_ref }}

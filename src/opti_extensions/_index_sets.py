@@ -6,7 +6,6 @@
 
 from __future__ import annotations
 
-import inspect
 import sys
 from collections import defaultdict
 from collections.abc import Callable, Collection, Iterable, Iterator, MutableSequence, Sequence
@@ -768,15 +767,6 @@ class IndexSet1D(IndexSetBase[Elem1DT]):
         self._list = list(self._set)
 
         return self
-
-    # Inheriting from Generic causes `inspect.signature` to return the signature of Generic's
-    # `__new__` for this class (instead of its own `__init__`). This side-effect leads to an
-    # incorrect call signature and return annotation output when calling `help` function for
-    # this class. So we amend it by defining `__signature__`.
-    __signature__ = inspect.Signature(
-        parameters=list(inspect.signature(__init__).parameters.values())[1:],  # skip `self` arg
-        return_annotation=inspect.signature(__init__).return_annotation,
-    )
 
 
 class IndexSetND(IndexSetBase[ElemNDT]):
@@ -1684,15 +1674,6 @@ class IndexSetND(IndexSetBase[ElemNDT]):
             name = None
 
         return IndexSet1D((key[0] for key in grouped), name=name)
-
-    # Overriding `__new__` for this class causes `inspect.signature` to return the signature of
-    # `__new__` for this class (instead of `__init__`). This side-effect leads to an incorrect
-    # call signature and return annotation output when calling `help` function for this class.
-    # So we amend it by defining `__signature__`.
-    __signature__ = inspect.Signature(
-        parameters=list(inspect.signature(__init__).parameters.values())[1:],  # skip `self` arg
-        return_annotation=inspect.signature(__init__).return_annotation,
-    )
 
 
 # Register as virtual subclass of collections.abc.MutableSequence

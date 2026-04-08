@@ -161,7 +161,7 @@ def test_diet():
     sol = solve(model, log_output=True)
 
     _obj = f'Objective={round(sol.objective_value, 2):.2f}'
-    _val = '\n'.join(f'{idx}={int(var.sv)}' for idx, var in buy.items())
+    _val = '\n'.join(f'{idx}={int(round(var.sv, 3))}' for idx, var in buy.items())
 
     sol_str = f'{_obj}\n{_val}'
     assert sol_str.split('\n') == [

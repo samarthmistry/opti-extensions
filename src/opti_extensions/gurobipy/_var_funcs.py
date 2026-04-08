@@ -283,9 +283,9 @@ def addVars(
     if not indexset:
         raise ValueError(f'{indexset.__class__.__name__} is empty')
 
-    lb = _preprocess_attr(indexset, lb, 'lb')
-    ub = _preprocess_attr(indexset, ub, 'ub')
-    obj = _preprocess_attr(indexset, obj, 'obj')
+    lb = _preprocess_attr(indexset, lb, 'lb')  # type: ignore[misc]
+    ub = _preprocess_attr(indexset, ub, 'ub')  # type: ignore[misc]
+    obj = _preprocess_attr(indexset, obj, 'obj')  # type: ignore[misc]
 
     gp_var_dict = model.addVars(indexset, lb=lb, ub=ub, obj=obj, vtype=vtype, name=name)  # type: ignore[arg-type]
     # Since gurobipy stubs do not identify IndexSet and ParamDict data structures, we'll add a type

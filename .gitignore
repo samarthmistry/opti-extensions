@@ -3,6 +3,7 @@ __pycache__
 build
 dist
 *.egg-info
+uv.lock
 
 # Test coverage
 .coverage
