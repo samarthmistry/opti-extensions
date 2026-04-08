@@ -77,10 +77,12 @@ jobs:
 
       - name: Generate coverage report from unit tests
         # Will FAIL if measured coverage is below 100%
-        run: pytest tests/unit_tests/ --no-summary --cov-fail-under 100
+        run: pytest tests/unit_tests/ --no-summary --cov-report=xml --cov-fail-under 100
 
       - name: Generate badge file from coverage report
-        uses: tj-actions/coverage-badge-py@v2
+        run: |
+          uv pip install --system genbadge[coverage]
+          genbadge coverage -i coverage.xml -o coverage.svg
 
       - name: Check for badge file change
         uses: tj-actions/verify-changed-files@v20
