@@ -6,8 +6,8 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterable
-from typing import TYPE_CHECKING, Any
+from collections.abc import Iterable, MutableMapping
+from typing import TYPE_CHECKING, Any, cast
 
 from ._index_sets import IndexSet1D, IndexSetND
 from ._param_dicts import ParamDict1D, ParamDictND
@@ -247,7 +247,9 @@ class DataFrameAccessor:
                     else list(map(str, self._df.index.names))
                 )
                 return ParamDictND(
-                    self._df.iloc[:, 0].to_dict(),
+                    cast(
+                        MutableMapping[tuple[Any, ...], int | float], self._df.iloc[:, 0].to_dict()
+                    ),
                     key_names=key_names,
                     value_name=str(self._df.columns[0]),
                 )
@@ -314,7 +316,7 @@ class SeriesAccessor:
         0      Delhi
         1    Seattle
         2      Tokyo
-        Name: CITY, dtype: object
+        Name: CITY, dtype: ...
 
         >>> cities.opti.to_indexset()
         IndexSet1D: (CITY)
@@ -423,7 +425,11 @@ class SeriesAccessor:
                 if any(x is None for x in self._series.index.names)
                 else list(map(str, self._series.index.names))
             )
-            return ParamDictND(self._series.to_dict(), key_names=key_names, value_name=value_name)
+            return ParamDictND(
+                cast(MutableMapping[tuple[Any, ...], int | float], self._series.to_dict()),
+                key_names=key_names,
+                value_name=value_name,
+            )
 
         else:  # single-level index
             key_name = None if self._series.index.name is None else str(self._series.index.name)
@@ -554,7 +560,7 @@ class IndexAccessor:
         Delhi      A
         Seattle    B
         Tokyo      C
-        Name: ID, dtype: object
+        Name: ID, dtype: ...
 
         >>> cities.index.opti.to_indexset()
         IndexSet1D: (CITY)
@@ -572,7 +578,7 @@ class IndexAccessor:
         Asia      Delhi      A
         Americas  Seattle    B
         Asia      Tokyo      C
-        Name: ID, dtype: object
+        Name: ID, dtype: ...
 
         >>> cities.index.opti.to_indexset()
         IndexSetND: (ZONE, CITY)

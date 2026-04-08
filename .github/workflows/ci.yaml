@@ -20,18 +20,21 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.10'
-          cache: 'pip'
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@cec208311dfd045dd5311c1add060b2062131d57 # v8.0.0
+        with:
+          version: "0.11.3"
+          enable-cache: true
 
       - name: Install project and dependencies
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install ".[dev, solver-apis]"
+        run: uv pip install --system ".[dev, solver-apis]"
 
       - name: Lint with Ruff
         # Will FAIL if any unfixable lint rule is violated
@@ -40,27 +43,15 @@ jobs:
       - name: Format with Ruff
         run: ruff format
 
-      - name: Check for file changes from Ruff
-        uses: tj-actions/verify-changed-files@v20
-        id: verify-ruff-change
-        with:
-          files: '**/*.py'
-
-      - name: Commit file changes from Ruff
-        if: steps.verify-ruff-change.outputs.files_changed == 'true'
+      - name: Commit and push file changes from Ruff
         run: |
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
-          git add -A
-          git commit -m "[Automated] Formatted with Ruff"
-
-      - name: Push file changes from Ruff
-        if: steps.verify-ruff-change.outputs.files_changed == 'true'
-        uses: ad-m/github-push-action@master
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          branch: ${{ github.head_ref }}
-          force: true
+          git add '**/*.py'
+          if ! git diff --staged --quiet; then
+            git config --local user.email "github-actions[bot]@users.noreply.github.com"
+            git config --local user.name "github-actions[bot]"
+            git commit -m "[Automated] Formatted with Ruff"
+            git push origin "HEAD:${{ github.head_ref }}" --force
+          fi
 
       - name: Check that docs can be built + Lint python docstrings with numpydoc (through Sphinx)
         # Will FAIL if Sphinx throws any warnings/errors or if any numpydoc lint rule is violated
@@ -74,29 +65,19 @@ jobs:
 
       - name: Generate coverage report from unit tests
         # Will FAIL if measured coverage is below 100%
-        run: pytest tests/unit_tests/ --no-summary --cov-fail-under 100
+        run: pytest tests/unit_tests/ --no-summary --cov-report=xml --cov-fail-under 100
 
       - name: Generate badge file from coverage report
-        uses: tj-actions/coverage-badge-py@v2
-
-      - name: Check for badge file change
-        uses: tj-actions/verify-changed-files@v20
-        id: verify-covbadge-change
-        with:
-          files: coverage.svg
-
-      - name: Commit badge file change
-        if: steps.verify-covbadge-change.outputs.files_changed == 'true'
         run: |
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
-          git add coverage.svg
-          git commit -m "[Automated] Updated coverage badge"
+          uv pip install --system genbadge[coverage]
+          genbadge coverage -i coverage.xml -o coverage.svg
 
-      - name: Push badge file change
-        if: steps.verify-covbadge-change.outputs.files_changed == 'true'
-        uses: ad-m/github-push-action@master
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          branch: ${{ github.head_ref }}
-          force: true
+      - name: Commit and push badge file change
+        run: |
+          git add coverage.svg
+          if ! git diff --staged --quiet; then
+            git config --local user.email "github-actions[bot]@users.noreply.github.com"
+            git config --local user.name "github-actions[bot]"
+            git commit -m "[Automated] Updated coverage badge"
+            git push origin "HEAD:${{ github.head_ref }}" --force
+          fi

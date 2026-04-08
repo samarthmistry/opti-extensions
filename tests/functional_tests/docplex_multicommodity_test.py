@@ -164,7 +164,7 @@ def test_multicommodity():
     sol = solve(model)
 
     _obj = f'Objective={round(sol.objective_value, 2):.2f}'
-    _val1 = '\n'.join(f'{idx}={int(var.sv)}' for idx, var in use.items())
+    _val1 = '\n'.join(f'{idx}={int(round(var.sv, 3))}' for idx, var in use.items())
     _val2 = '\n'.join(f'{idx}={round(var.sv + 1e-6, 2):.2f}' for idx, var in trans.items())
 
     sol_str = f'{_obj}\n{_val1}\n{_val2}'

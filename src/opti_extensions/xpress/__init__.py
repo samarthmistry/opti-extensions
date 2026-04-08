@@ -5,7 +5,7 @@
 """
 The `opti-extensions` package.
 
-`gurobipy`-specific functionality.
+`xpress`-specific functionality.
 """
 
 # Check required dependencies

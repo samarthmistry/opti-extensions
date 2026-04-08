@@ -159,7 +159,7 @@ def test_diet():
     model.optimize()
 
     _obj = f'Objective={round(model.ObjVal, 2):.2f}'
-    _val = '\n'.join(f'{idx}={int(var.X)}' for idx, var in buy.items())
+    _val = '\n'.join(f'{idx}={int(round(var.X, 3))}' for idx, var in buy.items())
 
     sol_str = f'{_obj}\n{_val}'
     assert sol_str.split('\n') == [
