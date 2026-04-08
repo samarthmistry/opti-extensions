@@ -92,7 +92,8 @@ def mdl_to_tune():
 
 
 @pytest.fixture(scope='module')
-def files_to_tune():
+def files_to_tune(tmp_path_factory):
+    tmp_path = tmp_path_factory.mktemp('models')
     mdl1 = Model(name='dummy1', checker='off', ignore_names=True)
     desk1 = mdl1.continuous_var(name='desk')
     cell1 = mdl1.continuous_var(name='cell')
@@ -105,7 +106,7 @@ def files_to_tune():
         ]
     )
     mdl1.maximize(12 * desk1 + 20 * cell1)
-    mdl1_path = mdl1.export_as_mps(basename='mdl1')  # will write to tempdir by default
+    mdl1_path = mdl1.export_as_mps(path=str(tmp_path), basename='mdl1')
     mdl1.end()
 
     mdl2 = Model(name='Dummy', checker='off', ignore_names=True)
@@ -120,13 +121,15 @@ def files_to_tune():
         ]
     )
     mdl2.maximize(14 * desk2 + 22 * cell2)
-    mdl2_path = mdl2.export_as_mps(basename='mdl2')  # will write to tempdir by default
+    mdl2_path = mdl2.export_as_mps(path=str(tmp_path), basename='mdl2')
     mdl2.end()
 
     yield mdl1_path, mdl2_path
 
-    os.remove(mdl1_path)
-    os.remove(mdl2_path)
+    if os.path.exists(mdl1_path):
+        os.remove(mdl1_path)
+    if os.path.exists(mdl2_path):
+        os.remove(mdl2_path)
 
 
 @pytest.fixture(scope='module')
