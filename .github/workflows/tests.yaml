@@ -19,20 +19,15 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Get latest commit SHA of main branch
-        run: |
-          git fetch origin main
-          MAIN_SHA=$(git rev-parse origin/main)
-          echo "main_sha=$MAIN_SHA" >> $GITHUB_ENV
-
       - name: Check for changed python files or pyproject.toml
         id: changed-py-files
-        uses: tj-actions/changed-files@v47
-        with:
-          base_sha: ${{ env.main_sha }}
-          files: |
-            **/*.py
-            pyproject.toml
+        run: |
+          git fetch origin main
+          if git diff --name-only origin/main HEAD | grep -qE '\.py$|^pyproject\.toml$'; then
+            echo "any_changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "any_changed=false" >> "$GITHUB_OUTPUT"
+          fi
 
     outputs:
       any_changed: ${{ steps.changed-py-files.outputs.any_changed }}
@@ -92,6 +87,8 @@ jobs:
             envs: grb12,grb13
           - name: xpress
             envs: xprs94,xprs95,xprs96,xprs97,xprs98
+          - name: highs
+            envs: highs111,highs112,highs113,highs114
       fail-fast: false
 
     steps:

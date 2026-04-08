@@ -43,27 +43,15 @@ jobs:
       - name: Format with Ruff
         run: ruff format
 
-      - name: Check for file changes from Ruff
-        uses: tj-actions/verify-changed-files@v20
-        id: verify-ruff-change
-        with:
-          files: '**/*.py'
-
-      - name: Commit file changes from Ruff
-        if: steps.verify-ruff-change.outputs.files_changed == 'true'
+      - name: Commit and push file changes from Ruff
         run: |
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
-          git add -A
-          git commit -m "[Automated] Formatted with Ruff"
-
-      - name: Push file changes from Ruff
-        if: steps.verify-ruff-change.outputs.files_changed == 'true'
-        uses: ad-m/github-push-action@v1
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          branch: ${{ github.head_ref }}
-          force: true
+          git add '**/*.py'
+          if ! git diff --staged --quiet; then
+            git config --local user.email "github-actions[bot]@users.noreply.github.com"
+            git config --local user.name "github-actions[bot]"
+            git commit -m "[Automated] Formatted with Ruff"
+            git push origin "HEAD:${{ github.head_ref }}" --force
+          fi
 
       - name: Check that docs can be built + Lint python docstrings with numpydoc (through Sphinx)
         # Will FAIL if Sphinx throws any warnings/errors or if any numpydoc lint rule is violated
@@ -84,24 +72,12 @@ jobs:
           uv pip install --system genbadge[coverage]
           genbadge coverage -i coverage.xml -o coverage.svg
 
-      - name: Check for badge file change
-        uses: tj-actions/verify-changed-files@v20
-        id: verify-covbadge-change
-        with:
-          files: coverage.svg
-
-      - name: Commit badge file change
-        if: steps.verify-covbadge-change.outputs.files_changed == 'true'
+      - name: Commit and push badge file change
         run: |
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
           git add coverage.svg
-          git commit -m "[Automated] Updated coverage badge"
-
-      - name: Push badge file change
-        if: steps.verify-covbadge-change.outputs.files_changed == 'true'
-        uses: ad-m/github-push-action@v1
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          branch: ${{ github.head_ref }}
-          force: true
+          if ! git diff --staged --quiet; then
+            git config --local user.email "github-actions[bot]@users.noreply.github.com"
+            git config --local user.name "github-actions[bot]"
+            git commit -m "[Automated] Updated coverage badge"
+            git push origin "HEAD:${{ github.head_ref }}" --force
+          fi
