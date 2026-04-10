@@ -8,7 +8,8 @@ Diet problem
 
 Please refer to chapter 2 in the `AMPL Book <https://ampl.com/learn/ampl-book>`_ for a
 detailed description of the problem. We demonstrate how to implement this model
-with DOcplex, gurobipy, and Xpress along with the functionality from `opti-extensions`.
+with DOcplex, gurobipy, Xpress, and highspy along with the functionality from
+`opti-extensions`.
 
 Implementation reference:
 https://github.com/ampl/colab.ampl.com/blob/master/ampl-lecture/diet_case_study.ipynb
@@ -302,3 +303,59 @@ for k, v in prob.getSolution(buy).items():
     if abs(v) > 1e-6:
         name = f'{buy.value_name}[{k}]:'
         print(f'{name:<15}  {v :>8.4f}')
+
+
+# %%
+# Implement with highspy
+# ----------------------
+
+from highspy import Highs, HighsVarType
+
+from opti_extensions.highspy import addVariables as addVariablesHighs
+
+# Instantiate model
+model = Highs()
+model.silent()
+
+# Add variables
+buy = addVariablesHighs(
+    model,
+    indexset=FOOD,
+    lb=f_min,
+    ub=f_max,
+    type=HighsVarType.kContinuous,
+    name_prefix='BUY-QTY',
+)
+# Instead of:
+# buy = model.addVariables(
+#     FOOD, lb=f_min, ub=f_max, type=HighsVarType.kContinuous, name_prefix='BUY-QTY'
+# )
+
+# Set objective
+model.minimize(
+    cost @ buy
+    # Instead of:
+    # Highs.qsum(cost[j] * buy[j] for j in FOOD)
+)
+
+# Add constraints
+model.addConstrs(
+    Highs.qsum(amt[i, j] * buy[j] for j in FOOD) >= n_min[i]
+    for i in NUTR
+)
+model.addConstrs(
+    Highs.qsum(amt[i, j] * buy[j] for j in FOOD) <= n_max[i]
+    for i in NUTR
+)
+
+# Solve
+model.solve()
+
+# %%
+print(f'{"var:":<15} {"value":>8}')
+print('-' * 25)
+for idx, var in buy.items():
+    val = model.val(var)
+    if abs(val) > 1e-6:
+        name = f'{buy.value_name}[{idx}]:'
+        print(f'{name:<15}  {val:>8.4f}')

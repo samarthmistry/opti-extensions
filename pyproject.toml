@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "opti-extensions"
 description = """\
     A collection of custom data structures and user-friendly functions for mathematical \
-    optimization modeling with DOcplex, gurobipy, and Xpress.\
+    optimization modeling with DOcplex, gurobipy, Xpress, and highspy.\
 """
 keywords = [
     "CPLEX",
@@ -14,6 +14,8 @@ keywords = [
     "Gurobi",
     "gurobipy",
     "Xpress",
+    "Highs",
+    "highspy",
     "linear programming",
     "mixed integer programming",
     "optimization model",
@@ -46,6 +48,7 @@ solver-apis = [
     "docplex>=2.25.236",
     "gurobipy>=11.0.0",
     "xpress>=9.4.0",
+    "highspy>=1.11.0",
 ]
 tests = [
     "pytest>=8.1.1",
@@ -174,7 +177,7 @@ show_error_context = true
 pretty = true
 
 [[tool.mypy.overrides]]
-module = ["docplex.mp.*", "xpress.*"]
+module = ["docplex.mp.*", "xpress.*", "highspy.*"]
 ignore_missing_imports = true
 
 ###### pytest ######

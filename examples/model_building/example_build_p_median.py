@@ -6,8 +6,8 @@
 P-median problem
 ================
 
-We demonstrate how to implement the model for the p-median problem with DOcplex, gurobipy, and
-Xpress along with the functionality from `opti-extensions`.
+We demonstrate how to implement the model for the p-median problem with DOcplex, gurobipy,
+Xpress, and highspy along with the functionality from `opti-extensions`.
 
 Implementation reference:
 https://github.com/ampl/colab.ampl.com/blob/master/authors/marcos-dv/location/p_median.ipynb
@@ -277,3 +277,77 @@ for vd in (x, y):
         if abs(v) > 1e-6:
             name = f'{vd.value_name}[{k}]:'
             print(f'{name:<15}  {v :>8.4f}')
+
+
+# %%
+# Implement with highspy
+# ----------------------
+
+from highspy import Highs, HighsVarType
+
+from opti_extensions.highspy import addVariables as addVariablesHighs
+
+# Instantiate model
+model = Highs()
+model.silent()
+
+# Add variables
+x = addVariablesHighs(
+    model,
+    indexset=CUST_x_FAC,
+    type=HighsVarType.kInteger,
+    lb=0,
+    ub=1,
+    name_prefix='x',
+)
+# Instead of:
+# x = model.addVariables(
+#    CUST_x_FAC, type=HighsVarType.kInteger, lb=0, ub=1, name_prefix='x'
+#)
+y = addVariablesHighs(
+    model,
+    indexset=FAC,
+    type=HighsVarType.kInteger,
+    lb=0,
+    ub=1,
+    name_prefix='y',
+)
+# Instead of:
+# y = model.addVariables(FAC, type=HighsVarType.kInteger, lb=0, ub=1, name_prefix='y')
+
+# Set objective
+model.minimize(
+    cost @ x
+    # Instead of:
+    # Highs.qsum(cost[i, j] * x[i, j] for i in CUST for j in FAC)
+)
+
+# Add constraints
+model.addConstrs(
+    x.sum(i, '*') == 1
+    # Instead of:
+    # Highs.qsum(x[i, j] for j in FAC) == 1
+    for i in CUST
+)
+model.addConstrs(
+    x[i, j] <= y[j]
+    for i, j in CUST_x_FAC
+)
+model.addConstr(
+    y.sum() == p
+    # Instead of:
+    # Highs.qsum(y[j] for j in FAC) == p
+)
+
+# Solve
+model.solve()
+
+# %%
+print(f'{"var:":<15} {"value":>8}')
+print('-' * 25)
+for vd in (x, y):
+    for idx, var in vd.items():
+        val = model.val(var)
+        if abs(val) > 1e-6:
+            name = f'{vd.value_name}[{idx}]:'
+            print(f'{name:<15}  {val:>8.4f}')

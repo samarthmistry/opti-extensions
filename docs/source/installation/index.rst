@@ -27,6 +27,8 @@ DOcplex     docplex >=2.25.236, cplex >=20.1.0
 gurobipy    gurobipy >=12.0
 ----------  ----------------------------------
 Xpress      xpress >=9.4
+----------  ----------------------------------
+highspy     highspy >=1.11.0
 ==========  ==================================
 
 Optional dependencies

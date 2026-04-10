@@ -6,10 +6,10 @@
 The `opti-extensions` package.
 
 A collection of custom data structures and user-friendly functions for mathematical optimization
-modeling with DOcplex, gurobipy, and Xpress.
+modeling with DOcplex, gurobipy, Xpress, and highspy.
 """
 
-__version__ = '1.2.0'
+__version__ = '1.3.0'
 
 # Package functionality
 from ._index_sets import IndexSet1D, IndexSetND

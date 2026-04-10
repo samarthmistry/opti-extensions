@@ -238,7 +238,9 @@ def autodoc_override_docstring(app, what, name, obj, options, lines):
                 func = 'add_variables'
             elif module.endswith('gurobipy'):
                 func = 'addVars'
-            else:  # xpress
+            elif module.endswith('xpress'):
+                func = 'addVariables'
+            elif module.endswith('highspy'):
                 func = 'addVariables'
             lines[:] = [
                 f'This class is not meant to be instantiated; {obj.__name__} is built through the '
