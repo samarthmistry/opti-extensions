@@ -3,7 +3,8 @@ API Reference
 
 All public functions and classes are provided through the ``opti_extensions.*``,
 ``opti_extensions.docplex.*``, ``opti_extensions.gurobipy.*``,
-``opti_extensions.xpress.*`` namespaces as follows:
+``opti_extensions.xpress.*``, and ``opti_extensions.highspy.*`` namespaces as
+follows:
 
 .. code-block:: RST
 
@@ -35,6 +36,11 @@ All public functions and classes are provided through the ``opti_extensions.*``,
   ├── VarDict1D
   └── VarDictND
 
+  opti_extensions.highspy
+  ├── addVariables
+  ├── VarDict1D
+  └── VarDictND
+
 .. warning::
    Modules, functions, and methods named with a leading underscore are PRIVATE. Stable
    functionality is not guaranteed.
@@ -51,5 +57,6 @@ Details
    docplex_variables
    gurobipy_variables
    xpress_variables
+   highspy_variables
 
 |

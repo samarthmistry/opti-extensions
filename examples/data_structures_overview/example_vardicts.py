@@ -14,7 +14,8 @@ variables for this problem with these data structures.
 
 .. note::
 
-    We'll be using DOcplex here, but the same approach will work for gurobipy and Xpress.
+    We'll be using DOcplex here, but the same approach will work for gurobipy, Xpress,
+    and highspy.
 """
 
 # %%

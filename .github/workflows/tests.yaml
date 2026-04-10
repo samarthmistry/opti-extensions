@@ -87,6 +87,8 @@ jobs:
             envs: grb12,grb13
           - name: xpress
             envs: xprs94,xprs95,xprs96,xprs97,xprs98
+          - name: highs
+            envs: highs111,highs112,highs113,highs114
       fail-fast: false
 
     steps:

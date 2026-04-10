@@ -8,7 +8,8 @@ Multicommodity transportation problem
 
 Please refer to chapters 4 & 20 in the `AMPL Book <https://ampl.com/learn/ampl-book>`_
 for a detailed description of the problem. We demonstrate how to implement this model
-with DOcplex, gurobipy, and Xpress along with the functionality from `opti-extensions`.
+with DOcplex, gurobipy, Xpress, and highspy along with the functionality from
+`opti-extensions`.
 
 Implementation reference:
 https://github.com/ampl/colab.ampl.com/blob/master/ampl-book/multmip1.ipynb
@@ -437,3 +438,94 @@ for vd in (trans, use):
         if abs(v) > 1e-6:
             name = f'{vd.value_name}[{k}]:'
             print(f'{name:<15}  {v :>8.4f}')
+
+
+# %%
+# Implement with highspy
+# ----------------------
+
+from highspy import Highs, HighsVarType, ObjSense
+
+from opti_extensions.highspy import addVariables as addVariablesHighs
+
+# Instantiate model
+model = Highs()
+model.silent()
+
+# Add variables
+trans = addVariablesHighs(
+    model,
+    IndexSetND(ORIG, DEST, PROD, names=('ORIG', 'DEST', 'PROD')),
+    type=HighsVarType.kContinuous,
+    name_prefix='NUM-UNITS',
+)
+# Instead of:
+# trans = model.addVariables(
+#     [(i, j, p) for i in ORIG for j in DEST for p in PROD],
+#     type=HighsVarType.kContinuous,
+#     name_prefix='NUM-UNITS',
+# )
+use = addVariablesHighs(
+    model,
+    IndexSetND(ORIG, DEST, names=('ORIG', 'DEST')),
+    type=HighsVarType.kInteger,
+    lb=0,
+    ub=1,
+    name_prefix='USE-ROUTE',
+)
+# Instead of:
+# use = model.addVariables(
+#     [(i, j) for i in ORIG for j in DEST],
+#     type=HighsVarType.kInteger,
+#     lb=0,
+#     ub=1,
+#     name_prefix='USE-ROUTE',
+# )
+
+# Set objective
+model.setObjective(
+    vcost @ trans + fcost @ use,
+    # Instead of:
+    # Highs.qsum(
+    #     vcost[i, j, p] * trans[i, j, p]
+    #     for i in ORIG for j in DEST for p in PROD
+    # )
+    # + Highs.qsum(
+    #     fcost[i, j] * use[i, j]
+    #     for i in ORIG for j in DEST
+    # )
+    ObjSense.kMinimize,
+)
+
+# Add constraints
+model.addConstrs(
+    trans.sum(i, '*', p) == supply[i, p]
+    # Instead of:
+    # Highs.qsum(trans[i, j, p] for j in DEST) == supply[i, p]
+    for i in ORIG for p in PROD
+)
+model.addConstrs(
+    trans.sum('*', j, p) == demand[j, p]
+    # Instead of:
+    # Highs.qsum(trans[i, j, p] for i in ORIG) == demand[j, p]
+    for j in DEST for p in PROD
+)
+model.addConstrs(
+    trans.sum(i, j, '*') <= limit * use[i, j]
+    # Instead of:
+    # Highs.qsum(trans[i, j, p] for p in PROD) <= limit * use[i, j]
+    for i in ORIG for j in DEST
+)
+
+# Solve
+model.solve()
+
+# %%
+print(f'{"var:":<15} {"value":>8}')
+print('-' * 25)
+for vd in (trans, use):
+    for idx, var in vd.items():
+        val = model.val(var)
+        if abs(val) > 1e-6:
+            name = f'{vd.value_name}[{idx}]:'
+            print(f'{name:<15}  {val:>8.4f}')
