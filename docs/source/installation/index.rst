@@ -24,7 +24,7 @@ Solver API  Recommended package versions
 ==========  ==================================
 DOcplex     docplex >=2.25.236, cplex >=20.1.0
 ----------  ----------------------------------
-gurobipy    gurobipy >=11
+gurobipy    gurobipy >=12.0
 ----------  ----------------------------------
 Xpress      xpress >=9.4
 ==========  ==================================
@@ -38,6 +38,6 @@ is present, this functionality will be registered with a custom ``.opti``
 accessor. Please refer to the :doc:`../api_reference/index` section for more
 details.
 
-pandas >=1.5.0 is recommended.
+pandas >=2.0.0 is recommended.
 
 |
