@@ -3,6 +3,7 @@ repos:
   rev: v6.0.0
   hooks:
   - id: end-of-file-fixer
+    exclude: coverage.svg
   - id: trailing-whitespace
   - id: check-toml
   - id: check-yaml
