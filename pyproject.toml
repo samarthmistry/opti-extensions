@@ -71,7 +71,7 @@ docs = [
     "numpy==2.2.6",                           # for compatibility with matplotlib
     "pandas==2.3.3",                          # for pandas accessor
     "pandas-stubs==2.3.3.260113",             # for pandas accessor
-    "numpydoc==1.8.0",
+    "numpydoc==1.10.0",
 ]
 dev = [
     "ruff>=0.7.0",
