@@ -2,14 +2,14 @@
 # This file is part of the `opti-extensions` package, which is released under
 # the Apache Licence, Version 2.0 (http://www.apache.org/licenses/LICENSE-2.0).
 
-"""Common fixtures and functionality for testing variable functionality."""
+"""Common fixtures and functionality for testing xpress variable functionality."""
 
 import warnings
 
 import pytest
 import xpress as xp
 
-from opti_extensions import IndexSetND
+from opti_extensions.xpress import VarDict1D, VarDictND, addVariables
 
 
 @pytest.fixture(scope='module')
@@ -33,11 +33,67 @@ def prob_2():
     prob_2.reset()
 
 
-@pytest.fixture
-def setNd_cmb2():
-    return IndexSetND(range(2), range(2))
+# --- Shared fixture aliases for shared test modules ---
 
 
 @pytest.fixture
-def setNd_cmb3():
-    return IndexSetND(range(2), range(2), range(2))
+def model(prob):
+    return prob
+
+
+@pytest.fixture
+def add_vars_fn():
+    return addVariables
+
+
+@pytest.fixture
+def add_vars_kwargs():
+    return {'vartype': xp.continuous, 'name': None}
+
+
+@pytest.fixture
+def add_vars_kwargs_with_name():
+    def _factory(name):
+        return {'vartype': xp.continuous, 'name': name}
+
+    return _factory
+
+
+@pytest.fixture
+def add_vars_kwargs_nd():
+    return {'vartype': xp.continuous, 'name': None}
+
+
+@pytest.fixture
+def vardict_classes():
+    return {'1D': VarDict1D, 'ND': VarDictND}
+
+
+@pytest.fixture
+def create_kwargs(prob):
+    return {'problem': prob, 'vartype': xp.continuous}
+
+
+@pytest.fixture
+def model_attr_name():
+    return 'problem'
+
+
+@pytest.fixture
+def vartype_attr_name():
+    return 'vartype'
+
+
+@pytest.fixture
+def sum_fn():
+    return xp.Sum
+
+
+@pytest.fixture
+def has_sum_squares():
+    return True
+
+
+@pytest.fixture
+def needs_update():
+    return False

@@ -7,7 +7,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
-from typing import Any, Literal, TypeVar, cast
+from typing import TYPE_CHECKING, Any, Literal, TypeVar, cast
 
 import xpress as xp
 
@@ -15,6 +15,9 @@ from .._dict_mixins import Dict1DMixin, DictNDMixin
 from .._index_sets import Elem1DT, ElemNDT, ElemT, IndexSet1D, IndexSetBase, IndexSetND
 from .._param_dicts import ParamDict1D, ParamDictND, ParamT
 from .._var_dict_base import VarDictBase, _validate_for_dot_1d, _validate_for_dot_Nd
+
+if TYPE_CHECKING:
+    from .._misc_types import MinimalRepresentationPrinter
 
 VarT = TypeVar('VarT', bound=xp.var)
 
@@ -169,11 +172,9 @@ class VarDict1D(VarDictCore[Elem1DT, VarT], Dict1DMixin[Elem1DT, VarT]):
         # Printable string representation.
         return f'{self._get_repr_header()}\n{super().__repr__()}'
 
-    def _repr_pretty_(self, p, cycle: bool) -> None:  # type: ignore[no-untyped-def]
+    def _repr_pretty_(self, p: MinimalRepresentationPrinter, cycle: bool) -> None:
         # Pretty repr for IPython.
         # https://ipython.readthedocs.io/en/stable/api/generated/IPython.lib.pretty.html#extending
-        # Since IPython is not typed, we'll add a type ignore comment here
-        # The annotation for arg `p` is `IPython.lib.pretty.RepresentationPrinter`
         p.text(f'{self._get_repr_header()}\n')
         p.pretty(dict(self))
 
@@ -433,11 +434,9 @@ class VarDictND(VarDictCore[ElemNDT, VarT], DictNDMixin[ElemNDT, VarT]):
         # Printable string representation.
         return f'{self._get_repr_header()}\n{super().__repr__()}'
 
-    def _repr_pretty_(self, p, cycle: bool) -> None:  # type: ignore[no-untyped-def]
+    def _repr_pretty_(self, p: MinimalRepresentationPrinter, cycle: bool) -> None:
         # Pretty repr for IPython.
         # https://ipython.readthedocs.io/en/stable/api/generated/IPython.lib.pretty.html#extending
-        # Since IPython is not typed, we'll add a type ignore comment here
-        # The annotation for arg `p` is `IPython.lib.pretty.RepresentationPrinter`
         p.text(f'{self._get_repr_header()}\n')
         p.pretty(dict(self))
 

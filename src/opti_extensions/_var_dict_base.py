@@ -57,9 +57,8 @@ def _validate_for_dot_Nd(
             'Dot product only allowed with ParamDictND (having tuple keys of same length as '
             'VarDictND)'
         )
-    else:
-        if paramdict._indexset._tuplelen != indexset._tuplelen:
-            raise ValueError('ParamDictND should have tuple keys of same length as VarDictND')
+    elif paramdict._indexset._tuplelen != indexset._tuplelen:
+        raise ValueError('ParamDictND should have tuple keys of same length as VarDictND')
 
 
 class VarDictBase(dict[ElemT, VarT], DictBaseMixin[ElemT, VarT]):

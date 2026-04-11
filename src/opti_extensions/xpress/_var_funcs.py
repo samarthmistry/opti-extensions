@@ -7,11 +7,12 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import Literal, overload
+from typing import Literal, TypeGuard, overload
 
 import xpress as xp
 
 from .._index_sets import Elem1DT, ElemNDT, IndexSet1D, IndexSetND
+from .._misc_types import _AttrT
 from .._param_dicts import ParamDict1D, ParamDictND, ParamT
 from ._var_dicts import VarDict1D, VarDictND
 
@@ -43,7 +44,7 @@ def _paramdictNd_as_attr(
     ValueError
         ParamDict keys and indexset have tuple elements of different lengths.
     """
-    if (not attr) or (attr and attr._indexset._tuplelen == indexset._tuplelen):
+    if not attr or attr._indexset._tuplelen == indexset._tuplelen:
         return attr
     else:
         raise ValueError(f'{attr_type} keys and indexset have tuple elements of different lengths')
@@ -51,35 +52,23 @@ def _paramdictNd_as_attr(
 
 def _preprocess_attr(
     indexset: IndexSet1D[Elem1DT] | IndexSetND[ElemNDT],
-    attr: int
-    | float
-    | ParamDict1D[Elem1DT, ParamT]
-    | ParamDictND[ElemNDT, ParamT]
-    | Mapping[Elem1DT, ParamT]
-    | Mapping[ElemNDT, ParamT],
+    attr: _AttrT,
     attr_type: Literal['lb', 'ub', 'threshold'],
-) -> (
-    int
-    | float
-    | ParamDict1D[Elem1DT, ParamT]
-    | ParamDictND[ElemNDT, ParamT]
-    | Mapping[Elem1DT, ParamT]
-    | Mapping[ElemNDT, ParamT]
-):
+) -> _AttrT:
     """Preprocess xpress variable attribute.
 
     Parameters
     ----------
     indexset : IndexSet1D or IndexSetND
         Index-set for defining the variables.
-    attr : Mapping or ParamDict
+    attr : int or float or Mapping or ParamDict
         Variable attribute.
     attr_type : str
         Attribute type, ``'lb'`` or ``'ub'`` or ``'threshold'``.
 
     Returns
     -------
-    Mapping or ParamDict
+    int or float or Mapping or ParamDict
         Xpress variable attribute for the `problem.addVariables` method.
 
     Raises
@@ -97,7 +86,8 @@ def _preprocess_attr(
             raise TypeError(f'`{attr_type}` should be ParamDictND when indexset is IndexSetND')
     elif isinstance(attr, ParamDictND):
         if isinstance(indexset, IndexSetND):
-            return _paramdictNd_as_attr(indexset, attr, attr_type)
+            _paramdictNd_as_attr(indexset, attr, attr_type)
+            return attr
         else:
             raise TypeError(f'`{attr_type}` should be ParamDict1D when indexset is IndexSet1D')
     # Let xpress handle everything else, so return as is
@@ -191,9 +181,9 @@ def addVariables(
     threshold : int or float or dict or ParamDict, optional
         Threshold, in one of the following forms:
 
-        * A number - if all variables share the same objective coefficient.
+        * A number - if all variables share the same threshold.
         * A dict/ParamDict - with keys following the same structute as the index-set elements and
-          values representing the objective coefficient; will fallback to the default for index-set
+          values representing the threshold; will fallback to the default for index-set
           elements not found in dict/ParamDict keys.
 
         Only applies to semi-continuous, semi-integer, and partially integer variables; it must be
@@ -263,23 +253,68 @@ def addVariables(
             indexset, name=name, lb=lb, ub=ub, threshold=threshold, vartype=vartype
         )
     else:
-        lb = _preprocess_attr(indexset, lb, 'lb')  # type: ignore[arg-type]
-        ub = _preprocess_attr(indexset, ub, 'ub')  # type: ignore[arg-type]
-        threshold = _preprocess_attr(indexset, threshold, 'threshold')  # type: ignore[arg-type]
-        # Using type ignore as mypy cannot deduce typevars.
-        xp_var_dict = {
-            elem: problem.addVariable(
-                name=f'{name}({elem})',
-                lb=lb if scalar_lb else lb.get(elem, 0),  # type: ignore
-                ub=ub if scalar_ub else ub.get(elem, xp.infinity),  # type: ignore
-                threshold=threshold if scalar_th else threshold.get(elem, 1),  # type: ignore
-                # Using type ignore as mypy cannot deduce that lb / ub / threshold would reduce to
-                # paramdicts or mappings. Moreover, mypy also complains about the type of defaults
-                # provided with respect to the typevars in class def.
-                vartype=vartype,
-            )
-            for elem in indexset
-        }
+        lb = _preprocess_attr(indexset, lb, 'lb')
+        ub = _preprocess_attr(indexset, ub, 'ub')
+        threshold = _preprocess_attr(indexset, threshold, 'threshold')
+
+        if isinstance(indexset, IndexSet1D):
+
+            def _is_1d_attr(
+                attr: int
+                | float
+                | ParamDict1D[Elem1DT, ParamT]
+                | ParamDictND[ElemNDT, ParamT]
+                | Mapping[Elem1DT, int | float]
+                | Mapping[ElemNDT, int | float],
+            ) -> TypeGuard[
+                int | float | ParamDict1D[Elem1DT, ParamT] | Mapping[Elem1DT, int | float]
+            ]:
+                return True
+
+            if _is_1d_attr(lb) and _is_1d_attr(ub) and _is_1d_attr(threshold):
+                xp_var_dict = {
+                    elem: problem.addVariable(
+                        name=f'{name}({elem})',
+                        lb=lb if isinstance(lb, (int, float)) else lb.get(elem, 0),
+                        ub=ub if isinstance(ub, (int, float)) else ub.get(elem, xp.infinity),
+                        threshold=(
+                            threshold
+                            if isinstance(threshold, (int, float))
+                            else threshold.get(elem, 1)
+                        ),
+                        vartype=vartype,
+                    )
+                    for elem in indexset
+                }
+        else:
+
+            def _is_nd_attr(
+                attr: int
+                | float
+                | ParamDict1D[Elem1DT, ParamT]
+                | ParamDictND[ElemNDT, ParamT]
+                | Mapping[Elem1DT, int | float]
+                | Mapping[ElemNDT, int | float],
+            ) -> TypeGuard[
+                int | float | ParamDictND[ElemNDT, ParamT] | Mapping[ElemNDT, int | float]
+            ]:
+                return True
+
+            if _is_nd_attr(lb) and _is_nd_attr(ub) and _is_nd_attr(threshold):
+                xp_var_dict = {
+                    elem: problem.addVariable(
+                        name=f'{name}({elem})',
+                        lb=lb if isinstance(lb, (int, float)) else lb.get(elem, 0),
+                        ub=ub if isinstance(ub, (int, float)) else ub.get(elem, xp.infinity),
+                        threshold=(
+                            threshold
+                            if isinstance(threshold, (int, float))
+                            else threshold.get(elem, 1)
+                        ),
+                        vartype=vartype,
+                    )
+                    for elem in indexset
+                }
 
     value_name = name if isinstance(name, str) else None
 
