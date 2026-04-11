@@ -91,7 +91,7 @@ def test_vardictNd_sum_partial_pass(mdl, indexset, pattern):
     v = addVariables(mdl, indexset, type=HighsVarType.kContinuous, name_prefix='VAL')
 
     def _match(key, pattern):
-        return all(k == p or p == '*' for k, p in zip(key, pattern, strict=False))
+        return all(p in (k, '*') for k, p in zip(key, pattern, strict=False))
 
     assert str(v.sum(*pattern)) == str(
         Highs.qsum(var for idx, var in v.items() if _match(idx, pattern))

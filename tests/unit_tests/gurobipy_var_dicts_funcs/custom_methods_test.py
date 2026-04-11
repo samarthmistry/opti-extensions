@@ -89,7 +89,7 @@ def test_vardictNd_sum_partial_pass(mdl, indexset, pattern):
     mdl.update()
 
     def _match(key, pattern):
-        return all(k == p or p == '*' for k, p in zip(key, pattern, strict=False))
+        return all(p in (k, '*') for k, p in zip(key, pattern, strict=False))
 
     assert str(v.sum(*pattern)) == str(
         quicksum(var for idx, var in v.items() if _match(idx, pattern))
