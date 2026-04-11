@@ -8,6 +8,8 @@ import pytest
 
 from opti_extensions import IndexSet1D, IndexSetND, ParamDict1D, ParamDictND
 from opti_extensions.docplex import add_variable, add_variables
+from tests.unit_tests._shared_var_funcs_tests import *  # noqa: F401, F403
+from tests.unit_tests._shared_var_funcs_tests import SHARED_INDEXSET_CASES
 
 
 @pytest.mark.parametrize(
@@ -65,27 +67,13 @@ def test_add_variable_vartype_valerr(mdl, var_type):
         add_variable(mdl, var_type)
 
 
-@pytest.mark.parametrize('indexset', [IndexSet1D(), IndexSetND()])
-def test_add_variables_indexset_valerr(mdl, indexset):
-    with pytest.raises(ValueError):
-        add_variables(mdl, indexset, 'C')
-
-
 @pytest.mark.parametrize('var_type', ['semicontinuous', 'semiinteger', 'SC', 'SI'])
 def test_add_variable_semix_valerr(mdl, var_type):
     with pytest.raises(ValueError):
         add_variable(mdl, var_type)
 
 
-indexset_cases = [
-    IndexSet1D(['A', 'B', 'C']),
-    IndexSet1D(range(3)),
-    IndexSetND(['A', 'B', 'C'], range(3)),
-    IndexSetND(range(3), range(3)),
-]
-
-
-@pytest.mark.parametrize('indexset', indexset_cases)
+@pytest.mark.parametrize('indexset', SHARED_INDEXSET_CASES)
 @pytest.mark.parametrize(
     'var_type, kwargs, docpx_method',
     [
@@ -108,65 +96,14 @@ def test_add_variables_pass(mdl, mdl_2, indexset, var_type, kwargs, docpx_method
     assert repr(dict(one)) == repr(two)
 
 
-@pytest.mark.parametrize('mdl', ['abc', 123, ('A', 'B')])
-@pytest.mark.parametrize('indexset', indexset_cases)
-@pytest.mark.parametrize(
-    'var_type, kwargs',
-    [
-        ('continuous', {}),
-        ('integer', {}),
-        ('binary', {}),
-        ('semicontinuous', {'lb': 1}),
-        ('semiinteger', {'lb': 1}),
-        ('C', {}),
-        ('I', {}),
-        ('B', {}),
-        ('SC', {'lb': 1}),
-        ('SI', {'lb': 1}),
-    ],
-)
-def test_add_variables_mdl_typerr(mdl, indexset, var_type, kwargs):
-    with pytest.raises(TypeError):
-        add_variables(mdl, indexset, var_type, **kwargs)
-
-
-@pytest.mark.parametrize(
-    'indexset',
-    [
-        (1, 2, 3),
-        [1, 2, 3],
-        [('A', 'B'), ('C', 'D')],
-        [('A', '1'), ('C', '2')],
-    ],
-)
-@pytest.mark.parametrize(
-    'var_type, kwargs',
-    [
-        ('continuous', {}),
-        ('integer', {}),
-        ('binary', {}),
-        ('semicontinuous', {'lb': 1}),
-        ('semiinteger', {'lb': 1}),
-        ('C', {}),
-        ('I', {}),
-        ('B', {}),
-        ('SC', {'lb': 1}),
-        ('SI', {'lb': 1}),
-    ],
-)
-def test_add_variables_idxset_typerr(mdl, indexset, var_type, kwargs):
-    with pytest.raises(TypeError):
-        add_variables(mdl, indexset, var_type, **kwargs)
-
-
-@pytest.mark.parametrize('indexset', indexset_cases)
+@pytest.mark.parametrize('indexset', SHARED_INDEXSET_CASES)
 @pytest.mark.parametrize('var_type', [123, (1, 2), {'SC'}])
 def test_add_variables_vartype_typerr(mdl, indexset, var_type):
     with pytest.raises(TypeError):
         add_variables(mdl, indexset, var_type)
 
 
-@pytest.mark.parametrize('indexset', indexset_cases)
+@pytest.mark.parametrize('indexset', SHARED_INDEXSET_CASES)
 @pytest.mark.parametrize('var_type', ['semi-continuous', 'semi-integer', 'abc'])
 def test_add_variables_vartype_valerr(mdl, indexset, var_type):
     with pytest.raises(ValueError):
@@ -230,31 +167,3 @@ def test_add_variables_paramdict_bound(mdl, indexset, paramdict, bound_type):
     two = mdl.continuous_var_dict(indexset, **bound_kwargs_2)
 
     assert repr(dict(one)) == repr(two)
-
-
-@pytest.mark.parametrize(
-    'indexset, paramdict',
-    [
-        (IndexSet1D(['A', 'B', 'C']), ParamDictND({('A', 0): 1, ('B', 0): 1, ('C', 0): 1})),
-        (IndexSetND(range(2), range(2)), ParamDict1D({0: 1, 1: 1})),
-    ],
-)
-@pytest.mark.parametrize('bound_type', ['lb', 'ub'])
-def test_add_variables_paramdict_typerr(mdl, indexset, paramdict, bound_type):
-    with pytest.raises(TypeError):
-        bound_kwargs_1 = {bound_type: paramdict}
-        add_variables(mdl, indexset, 'C', **bound_kwargs_1)
-
-
-@pytest.mark.parametrize(
-    'indexset, paramdict',
-    [
-        (IndexSetND(range(2), range(2)), ParamDictND({(0, 0, 0): 1, (0, 1, 0): 1})),
-        (IndexSetND(range(2), range(2)), ParamDictND({(0, 0, 0, 0): 1, (0, 1, 0, 0): 1})),
-    ],
-)
-@pytest.mark.parametrize('bound_type', ['lb', 'ub'])
-def test_add_variables_paramdict_difflen_valerr(mdl, indexset, paramdict, bound_type):
-    with pytest.raises(ValueError):
-        bound_kwargs_1 = {bound_type: paramdict}
-        add_variables(mdl, indexset, 'C', **bound_kwargs_1)
