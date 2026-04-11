@@ -46,7 +46,7 @@ class DataFrameAccessor:
     df : DataFrame
     """
 
-    def __init__(self, df: DataFrame):
+    def __init__(self, df: DataFrame) -> None:
         _check_empty(df)
         self._df = df
 
@@ -274,7 +274,7 @@ class SeriesAccessor:
     series : Series
     """
 
-    def __init__(self, series: Series[Any]):
+    def __init__(self, series: Series[Any]) -> None:
         _check_empty(series)
         self._series = series
 
@@ -444,7 +444,7 @@ class IndexAccessor:
     idx : Index
     """
 
-    def __init__(self, idx: Index[Any]):
+    def __init__(self, idx: Index[Any]) -> None:
         _check_empty(idx)
         self._idx = idx
 
