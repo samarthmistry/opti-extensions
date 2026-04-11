@@ -10,10 +10,13 @@ import statistics
 from collections import abc
 from collections.abc import Callable, Iterable, MutableMapping, Sequence
 from functools import partial
-from typing import Any, Literal, NoReturn, TypeVar, cast, overload
+from typing import TYPE_CHECKING, Any, Literal, NoReturn, TypeVar, cast, overload
 
 from ._dict_mixins import DefaultT, Dict1DMixin, DictBaseMixin, DictNDMixin
 from ._index_sets import Elem1DT, ElemNDT, ElemT, IndexSet1D, IndexSetBase, IndexSetND
+
+if TYPE_CHECKING:
+    from ._misc_types import MinimalRepresentationPrinter
 
 ParamT = TypeVar('ParamT', bound=int | float)
 
@@ -336,11 +339,9 @@ class ParamDict1D(ParamDictBase[Elem1DT, ParamT], Dict1DMixin[Elem1DT, ParamT]):
         # Printable string representation.
         return f'{self._get_repr_header()}\n{super().__repr__()}'
 
-    def _repr_pretty_(self, p, cycle: bool) -> None:  # type: ignore[no-untyped-def]
+    def _repr_pretty_(self, p: MinimalRepresentationPrinter, cycle: bool) -> None:
         # Pretty repr for IPython.
         # https://ipython.readthedocs.io/en/stable/api/generated/IPython.lib.pretty.html#extending
-        # Since IPython is not typed, we'll add a type ignore comment here
-        # The annotation for arg `p` is `IPython.lib.pretty.RepresentationPrinter`
         p.text(f'{self._get_repr_header()}\n')
         p.pretty(dict(self))
 
@@ -618,11 +619,9 @@ class ParamDictND(ParamDictBase[ElemNDT, ParamT], DictNDMixin[ElemNDT, ParamT]):
         # Printable string representation.
         return f'{self._get_repr_header()}\n{super().__repr__()}'
 
-    def _repr_pretty_(self, p, cycle: bool) -> None:  # type: ignore[no-untyped-def]
+    def _repr_pretty_(self, p: MinimalRepresentationPrinter, cycle: bool) -> None:
         # Pretty repr for IPython.
         # https://ipython.readthedocs.io/en/stable/api/generated/IPython.lib.pretty.html#extending
-        # Since IPython is not typed, we'll add a type ignore comment here
-        # The annotation for arg `p` is `IPython.lib.pretty.RepresentationPrinter`
         p.text(f'{self._get_repr_header()}\n')
         p.pretty(dict(self))
 

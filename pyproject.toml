@@ -138,19 +138,20 @@ checks = [
     "RT03", # Return value has no description
 ]
 exclude = [
-    "\\.__",             # Dunder methods
-    "._create",          # Dunder method impl
-    "._setitem_idx",     # Dunder method impl
-    "._setitem_slice",   # Dunder method impl
-    "._get_repr_header", # repr
-    "._repr_pretty_",    # repr
-    "SupportsGetItem",   # Protocol
-    "_RAISE_KEYERROR",   # Dummy
-    ".name",             # property
-    ".names",            # property
-    ".key_name",         # property
-    ".key_names",        # property
-    ".value_name",       # property
+    "\\.__",                        # Dunder methods
+    "._create",                     # Dunder method impl
+    "._setitem_idx",                # Dunder method impl
+    "._setitem_slice",              # Dunder method impl
+    "._get_repr_header",            # repr
+    "._repr_pretty_",               # repr
+    "SupportsGetItem",              # Protocol
+    "_RAISE_KEYERROR",              # Dummy
+    ".name",                        # property
+    ".names",                       # property
+    ".key_name",                    # property
+    ".key_names",                   # property
+    ".value_name",                  # property
+    "MinimalRepresentationPrinter", # protocol
 ]
 override_PR01 = [
     "^Not supported by ", # _param_dicts.ParamDictBase.update, .fromkeys
@@ -202,9 +203,10 @@ testpaths = [
 
 [tool.coverage.report]
 exclude_also = [
-    "find_spec",            # untestable
-    "def _get_repr_header", # repr
-    "def __repr__",         # repr
-    "def _repr_pretty_",    # repr
-    "except ImportError",   # optional dependency
+    "find_spec",             # untestable
+    "def _get_repr_header",  # repr
+    "def __repr__",          # repr
+    "def _repr_pretty_",     # repr
+    "except ImportError",    # optional dependency
+    'class .*\bProtocol\):', # no runtime logic
 ]

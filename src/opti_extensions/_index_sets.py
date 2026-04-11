@@ -30,6 +30,8 @@ if TYPE_CHECKING:
     from _typeshed import SupportsRichComparison
     from pandas import Timestamp
 
+    from ._misc_types import MinimalRepresentationPrinter
+
 ElemT = TypeVar('ElemT')
 Elem1DT = TypeVar('Elem1DT')
 Elem1DU = TypeVar('Elem1DU')
@@ -593,11 +595,9 @@ class IndexSet1D(IndexSetBase[Elem1DT]):
         # Printable string representation.
         return f'{self._get_repr_header()}\n{self._list.__repr__()}'
 
-    def _repr_pretty_(self, p, cycle: bool) -> None:  # type: ignore[no-untyped-def]
+    def _repr_pretty_(self, p: MinimalRepresentationPrinter, cycle: bool) -> None:
         # Pretty repr for IPython.
         # https://ipython.readthedocs.io/en/stable/api/generated/IPython.lib.pretty.html#extending
-        # Since IPython is not typed, we'll add a type ignore comment here
-        # The annotation for arg `p` is `IPython.lib.pretty.RepresentationPrinter`
         p.text(f'{self._get_repr_header()}\n')
         p.pretty(self._list)
 
@@ -1068,11 +1068,9 @@ class IndexSetND(IndexSetBase[ElemNDT]):
         # Printable string representation.
         return f'{self._get_repr_header()}\n{self._list.__repr__()}'
 
-    def _repr_pretty_(self, p, cycle: bool) -> None:  # type: ignore[no-untyped-def]
+    def _repr_pretty_(self, p: MinimalRepresentationPrinter, cycle: bool) -> None:
         # Pretty repr for IPython.
         # https://ipython.readthedocs.io/en/stable/api/generated/IPython.lib.pretty.html#extending
-        # Since IPython is not typed, we'll add a type ignore comment here
-        # The annotation for arg `p` is `IPython.lib.pretty.RepresentationPrinter`
         p.text(f'{self._get_repr_header()}\n')
         p.pretty(self._list)
 

@@ -4,6 +4,13 @@
 
 """Miscellaneous types."""
 
-from typing import TypeVar
+from typing import Any, Protocol, TypeVar
 
 _AttrT = TypeVar('_AttrT')
+
+
+class MinimalRepresentationPrinter(Protocol):
+    """Minimal protocol for `IPython.lib.pretty.RepresentationPrinter`."""
+
+    def text(self, obj: str) -> None: ...
+    def pretty(self, obj: Any) -> None: ...
