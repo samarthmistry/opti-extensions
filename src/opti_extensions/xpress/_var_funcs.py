@@ -61,14 +61,14 @@ def _preprocess_attr(
     ----------
     indexset : IndexSet1D or IndexSetND
         Index-set for defining the variables.
-    attr : Mapping or ParamDict
+    attr : int or float or Mapping or ParamDict
         Variable attribute.
     attr_type : str
         Attribute type, ``'lb'`` or ``'ub'`` or ``'threshold'``.
 
     Returns
     -------
-    Mapping or ParamDict
+    int or float or Mapping or ParamDict
         Xpress variable attribute for the `problem.addVariables` method.
 
     Raises
@@ -181,9 +181,9 @@ def addVariables(
     threshold : int or float or dict or ParamDict, optional
         Threshold, in one of the following forms:
 
-        * A number - if all variables share the same objective coefficient.
+        * A number - if all variables share the same threshold.
         * A dict/ParamDict - with keys following the same structute as the index-set elements and
-          values representing the objective coefficient; will fallback to the default for index-set
+          values representing the threshold; will fallback to the default for index-set
           elements not found in dict/ParamDict keys.
 
         Only applies to semi-continuous, semi-integer, and partially integer variables; it must be

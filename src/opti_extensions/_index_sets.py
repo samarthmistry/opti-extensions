@@ -1525,7 +1525,7 @@ class IndexSetND(IndexSetBase[ElemNDT]):
         Parameters
         ----------
         *pattern : Any
-            The pattern requires one value for each dimension of the N-dim tuple key. The
+            The pattern requires one value for each dimension of the N-dim tuple element. The
             single-character string ``'*'`` (asterisk) can be used as a wildcard to represent
             all possible values for a dimension.
 

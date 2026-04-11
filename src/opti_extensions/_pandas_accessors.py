@@ -164,7 +164,7 @@ class DataFrameAccessor:
             * A multi-index, single-column DataFrame will be cast into a ParamDictND having tuple of
               index labels as keys and column values as values. The multi-index names will be set as
               the `ParamDictND.key_names` attribute (as list[str]). The column name will be set as
-              the `ParamDict1D.value_name` attribute (as str).
+              the `ParamDictND.value_name` attribute (as str).
 
         Raises
         ------
@@ -343,7 +343,7 @@ class SeriesAccessor:
             * A multi-index Series will be cast into a ParamDictND having tuple of index labels as
               keys and Series values as values. The multi-index names will be set as the
               `ParamDictND.key_names` attribute (as list[str]). The Series name will be set as the
-              `ParamDict1D.value_name` attribute (as str).
+              `ParamDictND.value_name` attribute (as str).
 
         Raises
         ------
@@ -460,7 +460,7 @@ class IndexAccessor:
             * A single-level index will be cast into an IndexSet1D consisting of its values. The
               index name will be set as the `IndexSet1D.name` attribute (as str).
             * A multi-level index will be cast into an IndexSetND consisting of its values. The
-              column names will be set as the `IndexSetND.names` attribute (as list[str]).
+              index level names will be set as the `IndexSetND.names` attribute (as list[str]).
 
         Raises
         ------

@@ -464,7 +464,7 @@ def add_variables(
     ub : int or float or sequence or function or ParamDict, optional
         Upper bound, in one of the following forms:
 
-        * A number - if all variables share the same lower bound.
+        * A number - if all variables share the same upper bound.
         * A sequence of numbers - one for each variable.
         * A function - that returns a number when called on each element of the index-set.
         * A ParamDict - with keys following the same structute as the index-set elements and values
