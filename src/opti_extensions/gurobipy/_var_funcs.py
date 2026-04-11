@@ -12,6 +12,7 @@ from typing import Literal, overload
 from gurobipy import GRB, Model, Var
 
 from .._index_sets import Elem1DT, ElemNDT, IndexSet1D, IndexSetND
+from .._misc_types import _AttrT
 from .._param_dicts import ParamDict1D, ParamDictND, ParamT
 from ._var_dicts import VarDict1D, VarDictND
 
@@ -42,7 +43,7 @@ def _paramdictNd_as_attr(
     ValueError
         ParamDict keys and indexset have tuple elements of different lengths.
     """
-    if (not attr) or (attr and attr._indexset._tuplelen == indexset._tuplelen):
+    if not attr or attr._indexset._tuplelen == indexset._tuplelen:
         return attr
     else:
         raise ValueError(f'{attr_type} keys and indexset have tuple elements of different lengths')
@@ -50,23 +51,9 @@ def _paramdictNd_as_attr(
 
 def _preprocess_attr(
     indexset: IndexSet1D[Elem1DT] | IndexSetND[ElemNDT],
-    attr: int
-    | float
-    | Sequence[int | float]
-    | ParamDict1D[Elem1DT, ParamT]
-    | ParamDictND[ElemNDT, ParamT]
-    | Mapping[Elem1DT, int | float]
-    | Mapping[ElemNDT, int | float],
+    attr: _AttrT,
     attr_type: Literal['lb', 'ub', 'obj'],
-) -> (
-    int
-    | float
-    | Sequence[int | float]
-    | ParamDict1D[Elem1DT, ParamT]
-    | ParamDictND[ElemNDT, ParamT]
-    | Mapping[Elem1DT, int | float]
-    | Mapping[ElemNDT, int | float]
-):
+) -> _AttrT:
     """Preprocess gurobipy variable attribute.
 
     Parameters
@@ -98,7 +85,8 @@ def _preprocess_attr(
             raise TypeError(f'`{attr_type}` should be ParamDictND when indexset is IndexSetND')
     elif isinstance(attr, ParamDictND):
         if isinstance(indexset, IndexSetND):
-            return _paramdictNd_as_attr(indexset, attr, attr_type)
+            _paramdictNd_as_attr(indexset, attr, attr_type)
+            return attr
         else:
             raise TypeError(f'`{attr_type}` should be ParamDict1D when indexset is IndexSet1D')
     # Let gurobipy handle everything else, so return as is
@@ -283,9 +271,9 @@ def addVars(
     if not indexset:
         raise ValueError(f'{indexset.__class__.__name__} is empty')
 
-    lb = _preprocess_attr(indexset, lb, 'lb')  # type: ignore[misc]
-    ub = _preprocess_attr(indexset, ub, 'ub')  # type: ignore[misc]
-    obj = _preprocess_attr(indexset, obj, 'obj')  # type: ignore[misc]
+    lb = _preprocess_attr(indexset, lb, 'lb')
+    ub = _preprocess_attr(indexset, ub, 'ub')
+    obj = _preprocess_attr(indexset, obj, 'obj')
 
     gp_var_dict = model.addVars(indexset, lb=lb, ub=ub, obj=obj, vtype=vtype, name=name)  # type: ignore[arg-type]
     # Since gurobipy stubs do not identify IndexSet and ParamDict data structures, we'll add a type
