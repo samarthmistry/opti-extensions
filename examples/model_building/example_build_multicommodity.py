@@ -393,6 +393,7 @@ use = addVariables(
 # )
 
 # Set objective
+_sense = xp.ObjSense.MINIMIZE if int(xp.__version__.split('.')[0]) >= 10 else xp.minimize
 prob.setObjective(
     vcost @ trans + fcost @ use,
     # Instead of:
@@ -404,7 +405,7 @@ prob.setObjective(
     #     fcost[i, j] * use[i, j]
     #     for i in ORIG for j in DEST
     # )
-    sense=xp.minimize,
+    sense=_sense,
 )
 
 # Add constraints

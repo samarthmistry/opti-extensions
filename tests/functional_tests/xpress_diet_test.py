@@ -45,7 +45,8 @@ def test_diet(diet_data):
     ##### Set objective
 
     # Minimize the total cost of the diet
-    prob.setObjective(cost @ buy, sense=xp.minimize)
+    _sense = xp.ObjSense.MINIMIZE if int(xp.__version__.split('.')[0]) >= 10 else xp.minimize
+    prob.setObjective(cost @ buy, sense=_sense)
 
     ##### Add constraints
 

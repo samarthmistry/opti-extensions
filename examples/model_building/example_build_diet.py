@@ -276,11 +276,12 @@ buy = addVariables(prob, indexset=FOOD, vartype=xp.continuous, lb=f_min, ub=f_ma
 # }
 
 # Set objective
+_sense = xp.ObjSense.MINIMIZE if int(xp.__version__.split('.')[0]) >= 10 else xp.minimize
 prob.setObjective(
     cost @ buy,
     # Instead of:
     # xp.Sum(cost[j] * buy[j] for j in FOOD)
-    sense=xp.minimize,
+    sense=_sense,
 )
 
 # Add constraints

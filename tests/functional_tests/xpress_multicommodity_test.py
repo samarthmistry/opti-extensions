@@ -59,9 +59,10 @@ def test_multicommodity(multicommodity_data):
     ##### Set objective
 
     # Minimize the total shipping cost
+    _sense = xp.ObjSense.MINIMIZE if int(xp.__version__.split('.')[0]) >= 10 else xp.minimize
     prob.setObjective(
         vcost @ trans + fcost @ use,
-        sense=xp.minimize,
+        sense=_sense,
     )
 
     ##### Add constraints

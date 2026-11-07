@@ -242,11 +242,12 @@ y = addVariables(prob, indexset=FAC, vartype=xp.binary, name='y')
 # y = prob.addVariables(FAC, vartype=xp.binary, name='y')
 
 # Set objective
+_sense = xp.ObjSense.MINIMIZE if int(xp.__version__.split('.')[0]) >= 10 else xp.minimize
 prob.setObjective(
     cost @ x,
     # Instead of:
     # xp.Sum(cost[i, j] * x[i, j] for i in CUST for j in FAC)
-    sense=xp.minimize,
+    sense=_sense,
 )
 
 # Add constraints
