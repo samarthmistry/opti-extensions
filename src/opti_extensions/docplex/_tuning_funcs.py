@@ -4,14 +4,19 @@
 
 """Tuning tool functionality."""
 
+from __future__ import annotations
+
+from collections.abc import Mapping
 from io import TextIOBase
 from operator import attrgetter
 from pathlib import Path
-from typing import Any, TextIO
+from typing import Any
 
 from docplex.mp.model import Model
 from docplex.mp.params.parameters import Parameter
 from docplex.mp.utils import DOcplexException
+
+from .._misc_types import SupportsWrite
 
 
 def get_name(parameter: Any) -> str:
@@ -39,7 +44,7 @@ def _tune(
     input: Model | list[str],
     /,
     *,
-    log_output: bool | str | TextIO | None = True,
+    log_output: bool | str | SupportsWrite | None = True,
     overall_timelimit_sec: int | float | str | None = None,
     tuning_timelimit_sec: int | float | str | None = None,
     overall_timelimit_det: int | float | str | None = None,
@@ -47,7 +52,7 @@ def _tune(
     display_level: int | None = None,
     measure: int | None = None,
     repeat: int | None = None,
-    fixed_params_and_values: dict[str, int | float | bool | str] | None = None,
+    fixed_params_and_values: Mapping[str, int | float | bool | str] | None = None,
 ) -> dict[str, int | float]:
     """Run the CPLEX tuning tool for a DOcplex model or a batch of models (stored as files).
 
@@ -87,7 +92,7 @@ def _tune(
     repeat : int, optional
         Number of times tuning is to be repeated on reordered versions of a given model. Only
         applicable when tuning a single model. Corresponds to the CPLEX parameter `tune.repeat`.
-    fixed_params_and_values : dict, optional
+    fixed_params_and_values : Mapping or dict, optional
         Set of parameters and their values that should be respected by the tuning tool, in form of a
         dict having parameter names (as str such as 'lpmethod', 'mip.limits.cutpasses', etc.) as
         keys and parameter values as values. Default is ``None``.
@@ -131,8 +136,8 @@ def _tune(
         )
     if fixed_params_and_values is None:
         fixed_params_and_values = {}
-    if not isinstance(fixed_params_and_values, dict):
-        raise TypeError('`fixed_params_and_values` should be a dict')
+    if not isinstance(fixed_params_and_values, Mapping):
+        raise TypeError('`fixed_params_and_values` should be a Mapping or dict')
 
     # Process input
     match input:
@@ -276,14 +281,14 @@ def _tune(
 def tune(
     model: Model,
     *,
-    log_output: bool | str | TextIO | None = True,
+    log_output: bool | str | SupportsWrite | None = True,
     overall_timelimit_sec: int | float | str | None = None,
     tuning_timelimit_sec: int | float | str | None = None,
     overall_timelimit_det: int | float | str | None = None,
     tuning_timelimit_det: int | float | str | None = None,
     display_level: int | None = None,
     repeat: int | None = None,
-    fixed_params_and_values: dict[str, int | float | bool | str] | None = None,
+    fixed_params_and_values: Mapping[str, int | float | bool | str] | None = None,
 ) -> dict[str, int | float]:
     """Run tuning tests on a DOcplex model to search for performance-improving parameter settings.
 
@@ -323,7 +328,7 @@ def tune(
     repeat : int, optional
         Number of times tuning is to be repeated on reordered versions of a given model. Corresponds
         to the CPLEX parameter `tune.repeat`.
-    fixed_params_and_values : dict, optional
+    fixed_params_and_values : Mapping or dict, optional
         Set of parameters and their values that should be respected by the tuning tool, in form of a
         dict having parameter names (as str such as 'lpmethod', 'mip.limits.cutpasses', etc.) as
         keys and parameter values as values. Default is ``None``.
@@ -374,14 +379,14 @@ def tune(
 
 def batch_tune(
     *model_files: str,
-    log_output: bool | str | TextIO | None = True,
+    log_output: bool | str | SupportsWrite | None = True,
     overall_timelimit_sec: int | float | str | None = None,
     tuning_timelimit_sec: int | float | str | None = None,
     overall_timelimit_det: int | float | str | None = None,
     tuning_timelimit_det: int | float | str | None = None,
     display_level: int | None = None,
     measure: int | None = None,
-    fixed_params_and_values: dict[str, int | float | bool | str] | None = None,
+    fixed_params_and_values: Mapping[str, int | float | bool | str] | None = None,
 ) -> dict[str, int | float]:
     """Run tuning tests on a batch of models to search for performance-improving parameter settings.
 
@@ -421,7 +426,7 @@ def batch_tune(
         parameter `tune.display`.
     measure : int, optional
         Measure for evaluating progress. Corresponds to the CPLEX parameter `tune.measure`.
-    fixed_params_and_values : dict, optional
+    fixed_params_and_values : Mapping or dict, optional
         Set of parameters and their values that should be respected by the tuning tool, in form of a
         dict having parameter names (as str such as 'lpmethod', 'mip.limits.cutpasses', etc.) as
         keys and parameter values as values. Default is ``None``.

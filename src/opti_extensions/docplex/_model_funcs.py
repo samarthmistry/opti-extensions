@@ -4,11 +4,34 @@
 
 """DOcplex model-specific functions."""
 
+from __future__ import annotations
+
+from collections.abc import Iterable
 from io import TextIOBase
-from typing import Any, Literal, TextIO
+from typing import TYPE_CHECKING, Any, Literal, TypeAlias, TypedDict
 
 from docplex.mp.model import Model
 from docplex.mp.solution import SolveSolution
+from typing_extensions import Unpack
+
+from .._misc_types import SupportsWrite
+
+if TYPE_CHECKING:
+    from cplex import ParameterSet  # type: ignore[import-untyped]
+    from docplex.mp.context import Context
+    from docplex.mp.params.parameters import ParameterGroup, RootParameterGroup
+
+
+CheckerType: TypeAlias = Literal['default', 'std', 'numeric', 'full', 'on', 'off']
+
+
+class _SolveKwargs(TypedDict, total=False):  # numpydoc ignore=GL08
+    log_output: bool | str | SupportsWrite | None
+    clean_before_solve: bool
+    context: Context | None
+    cplex_parameters: RootParameterGroup | ParameterGroup | dict[str, Any] | None
+    checker: CheckerType | None
+    parameter_sets: Iterable[ParameterSet] | None
 
 
 def print_problem_stats(model: Model) -> None:
@@ -47,7 +70,7 @@ def print_solution_quality_stats(model: Model) -> None:
         print(model.get_cplex().solution.get_quality_metrics())
 
 
-def solve(model: Model, **kwargs: Any) -> SolveSolution | None:
+def solve(model: Model, **kwargs: Unpack[_SolveKwargs]) -> SolveSolution | None:
     """Solve a DOcplex model with additional logging output for problem and solution statistics.
 
     This function is a simple wrapper around `docplex.mp.model.Model`'s `solve` method and takes the
@@ -74,7 +97,7 @@ def solve(model: Model, **kwargs: Any) -> SolveSolution | None:
         ended, if any. Setting this flag to ``True`` forces a clean restart.
     context : docplex.mp.context.Context, optional
         Context instance to be used in instead of the context the model was built with.
-    cplex_parameters : docplex.mp.params.parameters.RootParameterGroup or dict, optional:
+    cplex_parameters : docplex.mp.params.parameters.RootParameterGroup or dict, optional
         A set of CPLEX parameters to use instead of the parameters defined as
         `context.cplex_parameters`, in one of the following forms:
 
@@ -93,7 +116,7 @@ def solve(model: Model, **kwargs: Any) -> SolveSolution | None:
           but recommended only when the model has been thoroughly tested.
 
         Default is ``'std'``.
-    parameter_sets : Iterable[ParameterSet], optional:
+    parameter_sets : Iterable[ParameterSet], optional
         An iterable of `ParameterSet` to be used with multi-objective optimization only. See the
         `create_parameter_sets` method of `docplex.mp.model.Model`.
 
@@ -169,7 +192,7 @@ def solve(model: Model, **kwargs: Any) -> SolveSolution | None:
 def runseeds(
     model: Model,
     count: int = 30,
-    log_output: Literal[True] | str | TextIO = True,
+    log_output: Literal[True] | str | SupportsWrite = True,
 ) -> None:
     """Evaluate variability of a mixed-integer DOcplex model by solving with different random seeds.
 

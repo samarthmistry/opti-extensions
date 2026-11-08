@@ -48,3 +48,18 @@ def test_addVars_paramdict_bound(mdl, mdl_2, indexset, paramdict, bound_type):
     assert set(one.keys()) == set(two.keys())
     assert all(str(type(v)) == "<class 'highspy.highs.highs_var'>" for v in one.values())
     assert all(str(type(v)) == "<class 'highspy.highs.highs_var'>" for v in two.values())
+
+
+@pytest.mark.parametrize(
+    'indexset, names',
+    [
+        (IndexSet1D(['A', 'B', 'C']), ['var_1', 'var_2', 'var_3']),
+        (IndexSetND([('A', 1), ('B', 2)]), ['flow_1', 'flow_2']),
+    ],
+)
+def test_addVars_name(mdl, mdl_2, indexset, names):
+    one = addVariables(mdl, indexset, name=names)
+    two = mdl_2.addVariables(indexset, name=names, out_array=False)
+
+    assert set(one.keys()) == set(two.keys())
+    assert [v.name for v in one.values()] == [v.name for v in two.values()] == names

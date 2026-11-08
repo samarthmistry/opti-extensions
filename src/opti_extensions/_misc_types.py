@@ -4,7 +4,7 @@
 
 """Miscellaneous types."""
 
-from typing import Any, Protocol, TypeVar
+from typing import Any, Protocol, TypeVar, runtime_checkable
 
 _AttrT = TypeVar('_AttrT')
 
@@ -14,3 +14,11 @@ class MinimalRepresentationPrinter(Protocol):
 
     def text(self, obj: str) -> None: ...
     def pretty(self, obj: Any) -> None: ...
+
+
+@runtime_checkable
+class SupportsWrite(Protocol):
+    """Protocol for stream objects supporting string write and flush."""
+
+    def write(self, s: str, /) -> object: ...  # numpydoc ignore=GL08
+    def flush(self) -> object: ...  # numpydoc ignore=GL08

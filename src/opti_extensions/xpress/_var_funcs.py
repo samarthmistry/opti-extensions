@@ -7,11 +7,11 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import Literal, TypeGuard, overload
+from typing import Literal, cast, overload
 
 import xpress as xp
 
-from .._index_sets import Elem1DT, ElemNDT, IndexSet1D, IndexSetND
+from .._index_sets import Elem1DT, ElemNDT, ElemT, IndexSet1D, IndexSetBase, IndexSetND
 from .._misc_types import _AttrT
 from .._param_dicts import ParamDict1D, ParamDictND, ParamT
 from ._var_dicts import VarDict1D, VarDictND
@@ -93,6 +93,51 @@ def _preprocess_attr(
     # Let xpress handle everything else, so return as is
     else:
         return attr
+
+
+def _add_vars_elemwise(
+    problem: xp.problem,
+    indexset: IndexSetBase[ElemT],
+    name: str | None,
+    lb: int | float | Mapping[ElemT, int | float],
+    ub: int | float | Mapping[ElemT, int | float],
+    threshold: int | float | Mapping[ElemT, int | float],
+    vartype: int,
+) -> dict[ElemT, xp.var]:
+    """Add variables element-by-element to the xpress problem.
+
+    Parameters
+    ----------
+    problem : xpress.problem
+        Xpress problem.
+    indexset : IndexSetBase
+        Index-set for defining the variables.
+    name : str or None
+        Variable name prefix.
+    lb : int, float, or Mapping
+        Lower bound.
+    ub : int, float, or Mapping
+        Upper bound.
+    threshold : int, float, or Mapping
+        Threshold.
+    vartype : int
+        Variable type.
+
+    Returns
+    -------
+    dict
+        Dictionary mapping elements to xpress variables.
+    """
+    return {
+        elem: problem.addVariable(
+            name=f'{name}({elem})' if name is not None else None,
+            lb=lb if isinstance(lb, int | float) else lb.get(elem, 0),
+            ub=ub if isinstance(ub, int | float) else ub.get(elem, xp.infinity),
+            threshold=(threshold if isinstance(threshold, int | float) else threshold.get(elem, 1)),
+            vartype=vartype,
+        )
+        for elem in indexset
+    }
 
 
 @overload
@@ -245,10 +290,11 @@ def addVariables(
     if not indexset:
         raise ValueError(f'{indexset.__class__.__name__} is empty')
 
-    scalar_lb = isinstance(lb, int | float)
-    scalar_ub = isinstance(ub, int | float)
-    scalar_th = isinstance(threshold, int | float)
-    if scalar_lb and scalar_ub and scalar_th:
+    if (
+        isinstance(lb, int | float)
+        and isinstance(ub, int | float)
+        and isinstance(threshold, int | float)
+    ):
         xp_var_dict = problem.addVariables(
             indexset, name=name, lb=lb, ub=ub, threshold=threshold, vartype=vartype
         )
@@ -258,63 +304,25 @@ def addVariables(
         threshold = _preprocess_attr(indexset, threshold, 'threshold')
 
         if isinstance(indexset, IndexSet1D):
-
-            def _is_1d_attr(
-                attr: int
-                | float
-                | ParamDict1D[Elem1DT, ParamT]
-                | ParamDictND[ElemNDT, ParamT]
-                | Mapping[Elem1DT, int | float]
-                | Mapping[ElemNDT, int | float],
-            ) -> TypeGuard[
-                int | float | ParamDict1D[Elem1DT, ParamT] | Mapping[Elem1DT, int | float]
-            ]:
-                return True
-
-            if _is_1d_attr(lb) and _is_1d_attr(ub) and _is_1d_attr(threshold):
-                xp_var_dict = {
-                    elem: problem.addVariable(
-                        name=f'{name}({elem})',
-                        lb=lb if isinstance(lb, (int, float)) else lb.get(elem, 0),
-                        ub=ub if isinstance(ub, (int, float)) else ub.get(elem, xp.infinity),
-                        threshold=(
-                            threshold
-                            if isinstance(threshold, (int, float))
-                            else threshold.get(elem, 1)
-                        ),
-                        vartype=vartype,
-                    )
-                    for elem in indexset
-                }
+            xp_var_dict = _add_vars_elemwise(
+                problem,
+                indexset,
+                name,
+                cast(int | float | Mapping[Elem1DT, int | float], lb),
+                cast(int | float | Mapping[Elem1DT, int | float], ub),
+                cast(int | float | Mapping[Elem1DT, int | float], threshold),
+                vartype,
+            )
         else:
-
-            def _is_nd_attr(
-                attr: int
-                | float
-                | ParamDict1D[Elem1DT, ParamT]
-                | ParamDictND[ElemNDT, ParamT]
-                | Mapping[Elem1DT, int | float]
-                | Mapping[ElemNDT, int | float],
-            ) -> TypeGuard[
-                int | float | ParamDictND[ElemNDT, ParamT] | Mapping[ElemNDT, int | float]
-            ]:
-                return True
-
-            if _is_nd_attr(lb) and _is_nd_attr(ub) and _is_nd_attr(threshold):
-                xp_var_dict = {
-                    elem: problem.addVariable(
-                        name=f'{name}({elem})',
-                        lb=lb if isinstance(lb, (int, float)) else lb.get(elem, 0),
-                        ub=ub if isinstance(ub, (int, float)) else ub.get(elem, xp.infinity),
-                        threshold=(
-                            threshold
-                            if isinstance(threshold, (int, float))
-                            else threshold.get(elem, 1)
-                        ),
-                        vartype=vartype,
-                    )
-                    for elem in indexset
-                }
+            xp_var_dict = _add_vars_elemwise(
+                problem,
+                indexset,
+                name,
+                cast(int | float | Mapping[ElemNDT, int | float], lb),
+                cast(int | float | Mapping[ElemNDT, int | float], ub),
+                cast(int | float | Mapping[ElemNDT, int | float], threshold),
+                vartype,
+            )
 
     value_name = name if isinstance(name, str) else None
 

@@ -7,7 +7,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from typing import Literal, overload
+from typing import Any, Literal, overload
 
 from highspy import Highs, HighsVarType, kHighsInf
 from highspy.highs import highs_var
@@ -282,8 +282,19 @@ def addVariables(
     ub = _preprocess_attr(indexset, ub, 'ub')
     obj = _preprocess_attr(indexset, obj, 'obj')
 
+    extra_kwargs: dict[str, Any] = {}
+    if name is not None:
+        extra_kwargs['name'] = name
+
     highs_var_dict = model.addVariables(
-        indexset, lb=lb, ub=ub, obj=obj, type=type, name_prefix=name_prefix, out_array=False
+        indexset,
+        lb=lb,
+        ub=ub,
+        obj=obj,
+        type=type,
+        name_prefix=name_prefix,
+        out_array=False,
+        **extra_kwargs,
     )
 
     value_name = name_prefix if isinstance(name_prefix, str) else None

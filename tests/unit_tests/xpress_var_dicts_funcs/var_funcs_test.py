@@ -61,3 +61,11 @@ def test_addVariables_paramdict_bound(prob, indexset, paramdict, bound_type, req
         }
 
     assert repr_one == repr(two)
+
+
+def test_addVariables_name_none_paramdict(prob):
+    nodes = IndexSet1D(['A', 'B'])
+    pd = ParamDict1D({'A': 1, 'B': 2})
+    v = addVariables(prob, nodes, name=None, lb=pd)
+    assert v.value_name is None
+    assert not any(var.name.startswith('None') for var in v.values())
