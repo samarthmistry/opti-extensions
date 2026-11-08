@@ -178,6 +178,8 @@ follow_imports = "normal"
 show_error_codes = true
 show_error_context = true
 pretty = true
+warn_unreachable = true
+enable_error_code = ["deprecated"]
 
 [[tool.mypy.overrides]]
 module = ["docplex.mp.*"]
@@ -192,6 +194,15 @@ module = ["xpress", "xpress.*", "highspy", "highspy.*"]
 follow_imports = "skip"
 follow_imports_for_stubs = true
 ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = [
+    "examples.model_building.*",
+    "example_build_diet",
+    "example_build_multicommodity",
+    "example_build_p_median",
+]
+allow_redefinition = true
 
 ###### pytest ######
 

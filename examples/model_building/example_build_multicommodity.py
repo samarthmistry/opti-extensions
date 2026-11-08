@@ -175,11 +175,13 @@ print(df_fcost)
 # Index-sets
 # ^^^^^^^^^^
 
-ORIG = df_supply.index.opti.to_indexset()
+from opti_extensions import IndexSet1D
 
-DEST = df_demand.index.opti.to_indexset()
+ORIG = IndexSet1D.from_index(df_supply.index)
 
-PROD = df_supply.columns.opti.to_indexset()
+DEST = IndexSet1D.from_index(df_demand.index)
+
+PROD = IndexSet1D.from_index(df_supply.columns)
 
 # %%
 # Parameters
@@ -272,7 +274,8 @@ sol = solve(model, log_output=True)
 # sol = model.solve(log_output=True)
 
 # %%
-sol.display(print_zeros=False)
+if sol is not None:
+    sol.display(print_zeros=False)
 
 # %%
 # Implement with gurobipy

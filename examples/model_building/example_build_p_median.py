@@ -72,7 +72,7 @@ class Instance(NamedTuple):
     p: int
 
 
-def generate_instance(num_customers: int, num_facilities: int, p: int):
+def generate_instance(num_customers: int, num_facilities: int, p: int) -> Instance:
     customers = list(range(1, num_customers + 1))
     customer_coord = {i: (random.uniform(0, 100), random.uniform(0, 100)) for i in customers}
 
@@ -169,7 +169,8 @@ sol = solve(model, log_output=True)
 # sol = model.solve(log_output=True)
 
 # %%
-sol.display(print_zeros=False)
+if sol is not None:
+    sol.display(print_zeros=False)
 
 # %%
 # Implement with gurobipy

@@ -61,7 +61,9 @@ jobs:
 
       - name: Static type check with mypy
         # Will FAIL if any error is found
-        run: mypy src
+        run: |
+          mypy src tests/typing_tests examples/model_building
+          mypy tests/typing_tests/clean_import_no_pandas.py
 
       - name: Generate coverage report from unit tests
         # Will FAIL if measured coverage is below 100%

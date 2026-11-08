@@ -215,7 +215,8 @@ sol = solve(model, log_output=True)
 # sol = model.solve(log_output=True)
 
 # %%
-sol.display(print_zeros=False)
+if sol is not None:
+    sol.display(print_zeros=False)
 
 # %%
 # Implement with gurobipy
