@@ -36,6 +36,22 @@ def test_set_contains_not(request, _input, value):
 
 
 @pytest.mark.parametrize(
+    '_input, value, expected',
+    [
+        ('set1d_emp', 0, 0),
+        ('set1d_012', 0, 1),
+        ('set1d_012', 9, 0),
+        ('setNd_emp', (0, 0), 0),
+        ('setNd_012', (0, 0), 1),
+        ('setNd_012', (0, 9), 0),
+    ],
+)
+def test_set_count(request, _input, value, expected):
+    input = request.getfixturevalue(_input)
+    assert input.count(value) == expected
+
+
+@pytest.mark.parametrize(
     '_input, expected',
     [
         ('set1d_emp', 0),
@@ -236,16 +252,26 @@ def test_tupleset_extend_elem_difflen(setNd_01, value):
         setNd_01.extend(value)
 
 
+class _CustomIndex:
+    def __init__(self, idx: int) -> None:
+        self._idx = idx
+
+    def __index__(self) -> int:
+        return self._idx
+
+
 @pytest.mark.parametrize(
     '_input, index, value, expected',
     [
         ('set1d_012', 0, 9, IndexSet1D([9, 0, 1, 2])),
+        ('set1d_012', _CustomIndex(0), 9, IndexSet1D([9, 0, 1, 2])),
         ('set1d_012', 2, 9, IndexSet1D([0, 1, 9, 2])),
         ('set1d_012', -1, 9, IndexSet1D([0, 1, 9, 2])),
         ('set1d_012', -3, 9, IndexSet1D([9, 0, 1, 2])),
         ('set1d_012', 9, 9, IndexSet1D([0, 1, 2, 9])),
         ('set1d_012', -9, 9, IndexSet1D([9, 0, 1, 2])),
         ('setNd_012', 0, (0, 9), IndexSetND([(0, 9), (0, 0), (0, 1), (0, 2)])),
+        ('setNd_012', _CustomIndex(0), (0, 9), IndexSetND([(0, 9), (0, 0), (0, 1), (0, 2)])),
         ('setNd_012', 2, (0, 9), IndexSetND([(0, 0), (0, 1), (0, 9), (0, 2)])),
         ('setNd_012', -1, (0, 9), IndexSetND([(0, 0), (0, 1), (0, 9), (0, 2)])),
         ('setNd_012', -3, (0, 9), IndexSetND([(0, 9), (0, 0), (0, 1), (0, 2)])),
@@ -350,9 +376,11 @@ def test_set_remove_valueerr(request, _input, value):
     '_input, index, expected',
     [
         ('set1d_012', 0, 0),
+        ('set1d_012', _CustomIndex(0), 0),
         ('set1d_012', -1, 2),
         ('set1d_012', 1, 1),
         ('setNd_012', 0, (0, 0)),
+        ('setNd_012', _CustomIndex(0), (0, 0)),
         ('setNd_012', -1, (0, 2)),
         ('setNd_012', 1, (0, 1)),
     ],

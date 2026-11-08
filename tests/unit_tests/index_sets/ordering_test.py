@@ -60,3 +60,23 @@ def test_set_reverse_pass(request, _input, expected):
     input = request.getfixturevalue(_input)
     input.reverse()
     assert_sets_same(input, expected)
+
+
+def test_tupleset_sort_clears_index_groups():
+    ts = IndexSetND([(0, 2), (0, 0), (0, 1)])
+    assert ts.subset(0, '*') == [(0, 2), (0, 0), (0, 1)]
+    assert (0,) in ts._index_groups
+
+    ts.sort()
+    assert not ts._index_groups
+    assert ts.subset(0, '*') == [(0, 0), (0, 1), (0, 2)]
+
+
+def test_tupleset_reverse_clears_index_groups():
+    ts = IndexSetND([(0, 0), (0, 1), (0, 2)])
+    assert ts.subset(0, '*') == [(0, 0), (0, 1), (0, 2)]
+    assert (0,) in ts._index_groups
+
+    ts.reverse()
+    assert not ts._index_groups
+    assert ts.subset(0, '*') == [(0, 2), (0, 1), (0, 0)]

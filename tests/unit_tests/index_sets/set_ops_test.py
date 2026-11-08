@@ -220,3 +220,20 @@ def test_set_set_operator_inplace_typerr(
         input -= other
     with pytest.raises(TypeError), assert_not_mutated(input):
         input ^= other
+
+
+@pytest.mark.parametrize('op', ['__ior__', '__iand__', '__isub__', '__ixor__'])
+def test_tupleset_inplace_set_ops_clear_cache_and_tuplelen(op):
+    ts = IndexSetND([(0, 0), (0, 1)])
+    assert ts.subset(0, '*') == [(0, 0), (0, 1)]
+    assert (0,) in ts._index_groups
+
+    other = IndexSetND([(0, 0), (0, 1)]) if op in ('__isub__', '__ixor__') else IndexSetND()
+    getattr(ts, op)(other)
+
+    assert not ts._index_groups
+    if not ts:
+        assert not hasattr(ts, '_tuplelen')
+        # Can now append a 3-tuple since the set was emptied
+        ts.append((1, 2, 3))
+        assert ts == IndexSetND([(1, 2, 3)])

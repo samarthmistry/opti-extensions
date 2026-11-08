@@ -33,6 +33,7 @@ Sequence operations
    IndexSet1D.remove
    IndexSet1D.pop
    IndexSet1D.clear
+   IndexSet1D.count
    IndexSet1D.index
    IndexSet1D.sort
    IndexSet1D.reverse
@@ -143,6 +144,7 @@ Sequence operations
    IndexSetND.remove
    IndexSetND.pop
    IndexSetND.clear
+   IndexSetND.count
    IndexSetND.index
    IndexSetND.sort
    IndexSetND.reverse

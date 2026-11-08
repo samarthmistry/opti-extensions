@@ -8,14 +8,21 @@ from __future__ import annotations
 
 import sys
 from collections import defaultdict
-from collections.abc import Callable, Collection, Iterable, Iterator, MutableSequence, Sequence
-from datetime import date, datetime
+from collections.abc import (
+    Callable,
+    Collection,
+    Hashable,
+    Iterable,
+    Iterator,
+    MutableSequence,
+    Sequence,
+)
 from itertools import product
 from operator import itemgetter
 from typing import (
     TYPE_CHECKING,
     Any,
-    Generic,
+    Literal,
     NoReturn,
     SupportsIndex,
     TypeAlias,
@@ -28,25 +35,28 @@ from typing_extensions import Self, Unpack, override
 
 if TYPE_CHECKING:
     from _typeshed import SupportsRichComparison
-    from pandas import Timestamp
 
     from ._misc_types import MinimalRepresentationPrinter
 
 ElemT = TypeVar('ElemT')
-Elem1DT = TypeVar('Elem1DT')
-Elem1DU = TypeVar('Elem1DU')
+Elem1DT = TypeVar('Elem1DT', bound=Hashable)
+Elem1DU = TypeVar('Elem1DU', bound=Hashable)
 ElemNDT = TypeVar('ElemNDT', bound=tuple[Any, ...])
 ElemNDU = TypeVar('ElemNDU', bound=tuple[Any, ...])
 IndexGroup: TypeAlias = defaultdict[tuple[Any, ...], list[ElemT]]
 
-_T1 = TypeVar('_T1', str, int, date, datetime, 'Timestamp')
-_T2 = TypeVar('_T2', str, int, date, datetime, 'Timestamp')
-_T3 = TypeVar('_T3', str, int, date, datetime, 'Timestamp')
-_T4 = TypeVar('_T4', str, int, date, datetime, 'Timestamp')
-_T5 = TypeVar('_T5', str, int, date, datetime, 'Timestamp')
+_S1 = TypeVar('_S1', bound=Hashable)
+_S2 = TypeVar('_S2', bound=Hashable)
+_S3 = TypeVar('_S3', bound=Hashable)
+_S4 = TypeVar('_S4', bound=Hashable)
+_S5 = TypeVar('_S5', bound=Hashable)
+_U1 = TypeVar('_U1', bound=Hashable)
+_U2 = TypeVar('_U2', bound=Hashable)
+_U3 = TypeVar('_U3', bound=Hashable)
+_U4 = TypeVar('_U4', bound=Hashable)
 
 
-class IndexSetBase(Generic[ElemT]):
+class IndexSetBase(MutableSequence[ElemT]):
     """Base class for custom list-like data structures to define index-sets.
 
     Provides implementations for:
@@ -183,7 +193,7 @@ class IndexSetBase(Generic[ElemT]):
             self._raise_op_not_supported_err('>=')
         return self._set >= other._set
 
-    def __add__(self, other: Iterable[Any], /) -> Self:
+    def __add__(self, other: Iterable[ElemT], /) -> Self:
         # Concatenate `self` with `other` and return a new instance.
         if other:  # is pouplated
             try:
@@ -198,7 +208,8 @@ class IndexSetBase(Generic[ElemT]):
             return self.__class__(lst_other)
         return self.__class__(self._list)
 
-    def __iadd__(self, other: Iterable[Any], /) -> Self:
+    @override
+    def __iadd__(self, other: Iterable[ElemT], /) -> Self:
         # Concatenate `self` with `other`, in-place.
         if other:  # is pouplated
             try:
@@ -219,6 +230,7 @@ class IndexSetBase(Generic[ElemT]):
     @overload
     def __getitem__(self, index: slice, /) -> list[ElemT]: ...
 
+    @override
     def __getitem__(self, index: SupportsIndex | slice, /) -> ElemT | list[ElemT]:
         # Get element(s) at particular position index or slice.
         try:
@@ -267,6 +279,7 @@ class IndexSetBase(Generic[ElemT]):
     @overload
     def __setitem__(self, index: slice, elem: Iterable[ElemT], /) -> None: ...
 
+    @override
     def __setitem__(self, index: SupportsIndex | slice, elem: ElemT | Iterable[ElemT], /) -> None:
         # Assign element(s) at particular position index or slice.
         match index:
@@ -279,6 +292,7 @@ class IndexSetBase(Generic[ElemT]):
                     f'position indices must be integers or slices, not {type(index).__name__}'
                 )
 
+    @override
     def __delitem__(self, index: SupportsIndex | slice, /) -> None:
         # Remove element(s) at particular position index or slice.
         try:
@@ -297,22 +311,41 @@ class IndexSetBase(Generic[ElemT]):
         except IndexError:
             raise IndexError('position index out of range') from None
 
-    def __contains__(self, elem: ElemT, /) -> bool:
+    @override
+    def __contains__(self, elem: object, /) -> bool:
         # Set membership test: `element in self`.
         return self._set.__contains__(elem)
 
+    @override
     def __iter__(self) -> Iterator[ElemT]:
         # Iterate over `self`.
         return iter(self._list)
 
+    @override
     def __reversed__(self) -> Iterator[ElemT]:
         # Iterate over `self` in reverse.
         return reversed(self._list)
 
+    @override
     def __len__(self) -> int:
         # Get the length of `self`.
         return len(self._list)
 
+    @override
+    def count(self, value: object, /) -> int:
+        """Return the number of occurrences of a value in the IndexSet (0 or 1).
+
+        Parameters
+        ----------
+        value : object
+
+        Returns
+        -------
+        int
+        """
+        return int(value in self._set)
+
+    @override
     def index(
         self, elem: ElemT, start: SupportsIndex = 0, end: SupportsIndex = sys.maxsize, /
     ) -> int:
@@ -340,6 +373,7 @@ class IndexSetBase(Generic[ElemT]):
         except ValueError:
             raise ValueError(f'`{elem}` not in {self.__class__.__name__}') from None
 
+    @override
     def append(self, elem: ElemT, /) -> None:
         """Append an element to the end of the IndexSet, in-place.
 
@@ -359,6 +393,7 @@ class IndexSetBase(Generic[ElemT]):
             self._set = self._ensure_no_duplicates(self._list + new)
             self._list.append(elem)
 
+    @override
     def extend(self, elems: Iterable[ElemT], /) -> None:
         """Extend the IndexSet by appending elements from an iterable, in-place.
 
@@ -381,6 +416,7 @@ class IndexSetBase(Generic[ElemT]):
             self._set = self._ensure_no_duplicates(self._list + new)
             self._list.extend(new)
 
+    @override
     def insert(self, index: SupportsIndex, elem: ElemT, /) -> None:
         """Insert an element at a position index in the IndexSet.
 
@@ -397,14 +433,16 @@ class IndexSetBase(Generic[ElemT]):
             If the element is already present in the IndexSet (introduces a duplicate).
         """
         match index:
-            case int():
+            case SupportsIndex():
                 elems = [elem]
                 if self._validate_elements(elems):
-                    self._set = self._ensure_no_duplicates(self._list + elems)
+                    new_set = self._ensure_no_duplicates(self._list + elems)
                     self._list.insert(index, elem)
+                    self._set = new_set
             case _:
                 raise TypeError(f'position index must be an integer, not {type(index).__name__}')
 
+    @override
     def remove(self, elem: ElemT, /) -> None:
         """Remove an element from the IndexSet, in-place.
 
@@ -423,7 +461,8 @@ class IndexSetBase(Generic[ElemT]):
         except ValueError:
             raise ValueError(f'`{elem}` not in {self.__class__.__name__}') from None
 
-    def pop(self, index: int = -1, /) -> ElemT:
+    @override
+    def pop(self, index: SupportsIndex = -1, /) -> ElemT:
         """Remove and return the element at a position index in the IndexSet.
 
         Parameters
@@ -446,6 +485,7 @@ class IndexSetBase(Generic[ElemT]):
         self._remove_elements([elem])
         return elem
 
+    @override
     def clear(self) -> None:
         """Remove all elements from the IndexSet."""
         if self._list:  # is pouplated
@@ -476,11 +516,12 @@ class IndexSetBase(Generic[ElemT]):
         """
         self._list.sort(key=key, reverse=reverse)
 
+    @override
     def reverse(self) -> None:
         """Reverse the order of elements of the IndexSet, in-place."""
         self._list.reverse()
 
-    def isdisjoint(self, other: Iterable[Any]) -> bool:
+    def isdisjoint(self, other: Iterable[object]) -> bool:
         """Whether the IndexSet has no elements in common with another iterable, or not.
 
         Parameters
@@ -602,7 +643,7 @@ class IndexSet1D(IndexSetBase[Elem1DT]):
         p.pretty(self._list)
 
     @staticmethod
-    def _check_allscalars(elems: list[Elem1DT]) -> None:
+    def _check_allscalars(elems: list[Any]) -> None:
         """Check if a list contains all 1-dim scalar elements (no iterables except string).
 
         Parameters
@@ -640,7 +681,14 @@ class IndexSet1D(IndexSetBase[Elem1DT]):
         self._check_allscalars(elems)
         return True
 
-    def intersection(self, *others: Iterable[Any]) -> IndexSet1D[Elem1DT]:
+    @override
+    def __add__(self, other: Iterable[Elem1DU], /) -> IndexSet1D[Elem1DT | Elem1DU]:
+        # Concatenate `self` with `other` and return a new instance.
+        return cast(
+            'IndexSet1D[Elem1DT | Elem1DU]', super().__add__(cast('Iterable[Elem1DT]', other))
+        )
+
+    def intersection(self, *others: Iterable[object]) -> IndexSet1D[Elem1DT]:
         """Return a new IndexSet1D with elements common to the IndexSet1D and all others.
 
         The new IndexSet1D will have the same `name` attribute as the original.
@@ -670,7 +718,7 @@ class IndexSet1D(IndexSetBase[Elem1DT]):
         """
         return IndexSet1D(self._set.union(*others), name=self.name)
 
-    def difference(self, *others: Iterable[Any]) -> IndexSet1D[Elem1DT]:
+    def difference(self, *others: Iterable[object]) -> IndexSet1D[Elem1DT]:
         """Return a new IndexSet1D with elements in the IndexSet1D that are not in the others.
 
         The new IndexSet1D will have the same `name` attribute as the original.
@@ -717,14 +765,14 @@ class IndexSet1D(IndexSetBase[Elem1DT]):
 
         return self
 
-    def __or__(self, other: IndexSet1D[Elem1DT]) -> IndexSet1D[Elem1DT]:
+    def __or__(self, other: IndexSet1D[Elem1DU]) -> IndexSet1D[Elem1DT | Elem1DU]:
         # Set operation `self | other` (union), if other is also of the same type.
         # Returns a new instance with the same `name` attribute.
         if not isinstance(other, IndexSet1D):
             self._raise_op_not_supported_err('|')
         return IndexSet1D(self._set | other._set, name=self.name)
 
-    def __ior__(self, other: IndexSet1D[Elem1DT]) -> IndexSet1D[Elem1DT]:
+    def __ior__(self, other: IndexSet1D[Elem1DT]) -> IndexSet1D[Elem1DT]:  # type: ignore[misc]
         # In-place set operation `self |= other` (union), if other is also of the same type.
         if not isinstance(other, IndexSet1D):
             self._raise_op_not_supported_err('|=')
@@ -865,6 +913,13 @@ class IndexSetND(IndexSetBase[ElemNDT]):
 
     __slots__ = ('_names', '_tuplelen', '_index_groups')
 
+    @overload  # 0-arg empty
+    def __init__(
+        self,
+        *,
+        names: Sequence[str] | None = ...,
+    ) -> None: ...
+
     @overload  # 2 / 3 / 4 / 5 / ...
     def __init__(
         self: Self,
@@ -873,109 +928,109 @@ class IndexSetND(IndexSetBase[ElemNDT]):
         names: Sequence[str] | None = ...,
     ) -> None: ...
 
-    @overload  # 2 = 1 + 1
+    @overload  # 4 = 2 + 2
     def __init__(
-        self: IndexSetND[tuple[_T1, _T2]],
-        __iterable1: Iterable[_T1],
-        __iterable2: Iterable[_T2],
+        self: IndexSetND[tuple[_S1, _S2, _S3, _S4]],
+        __iterable1: Iterable[tuple[_S1, _S2]],
+        __iterable2: Iterable[tuple[_S3, _S4]],
         *,
         names: Sequence[str] | None = ...,
     ) -> None: ...
 
     @overload  # 3 = 2 + 1
     def __init__(
-        self: IndexSetND[tuple[_T1, _T2, _T3]],
-        __iterable1: Iterable[tuple[_T1, _T2]],
-        __iterable2: Iterable[_T3],
+        self: IndexSetND[tuple[_S1, _S2, _S3]],
+        __iterable1: Iterable[tuple[_S1, _S2]],
+        __iterable2: Iterable[_S3],
         *,
         names: Sequence[str] | None = ...,
     ) -> None: ...
 
     @overload  # 3 = 1 + 2
     def __init__(
-        self: IndexSetND[tuple[_T1, _T2, _T3]],
-        __iterable1: Iterable[_T1],
-        __iterable2: Iterable[tuple[_T2, _T3]],
-        *,
-        names: Sequence[str] | None = ...,
-    ) -> None: ...
-
-    @overload  # 3 = 1 + 1 + 1
-    def __init__(
-        self: IndexSetND[tuple[_T1, _T2, _T3]],
-        __iterable1: Iterable[_T1],
-        __iterable2: Iterable[_T2],
-        __iterable3: Iterable[_T3],
+        self: IndexSetND[tuple[_S1, _S2, _S3]],
+        __iterable1: Iterable[_S1],
+        __iterable2: Iterable[tuple[_S2, _S3]],
         *,
         names: Sequence[str] | None = ...,
     ) -> None: ...
 
     @overload  # 4 = 3 + 1
     def __init__(
-        self: IndexSetND[tuple[_T1, _T2, _T3, _T4]],
-        __iterable1: Iterable[tuple[_T1, _T2, _T3]],
-        __iterable2: Iterable[_T4],
-        *,
-        names: Sequence[str] | None = ...,
-    ) -> None: ...
-
-    @overload  # 4 = 2 + 2
-    def __init__(
-        self: IndexSetND[tuple[_T1, _T2, _T3, _T4]],
-        __iterable1: Iterable[tuple[_T1, _T2]],
-        __iterable2: Iterable[tuple[_T3, _T4]],
-        *,
-        names: Sequence[str] | None = ...,
-    ) -> None: ...
-
-    @overload  # 4 = 2 + 1 + 1
-    def __init__(
-        self: IndexSetND[tuple[_T1, _T2, _T3, _T4]],
-        __iterable1: Iterable[tuple[_T1, _T2]],
-        __iterable2: Iterable[_T3],
-        __iterable3: Iterable[_T4],
+        self: IndexSetND[tuple[_S1, _S2, _S3, _S4]],
+        __iterable1: Iterable[tuple[_S1, _S2, _S3]],
+        __iterable2: Iterable[_S4],
         *,
         names: Sequence[str] | None = ...,
     ) -> None: ...
 
     @overload  # 4 = 1 + 3
     def __init__(
-        self: IndexSetND[tuple[_T1, _T2, _T3, _T4]],
-        __iterable1: Iterable[_T1],
-        __iterable2: Iterable[tuple[_T2, _T3, _T4]],
+        self: IndexSetND[tuple[_S1, _S2, _S3, _S4]],
+        __iterable1: Iterable[_S1],
+        __iterable2: Iterable[tuple[_S2, _S3, _S4]],
+        *,
+        names: Sequence[str] | None = ...,
+    ) -> None: ...
+
+    @overload  # 2 = 1 + 1
+    def __init__(
+        self: IndexSetND[tuple[_S1, _S2]],
+        __iterable1: Iterable[_S1],
+        __iterable2: Iterable[_S2],
+        *,
+        names: Sequence[str] | None = ...,
+    ) -> None: ...
+
+    @overload  # 4 = 2 + 1 + 1
+    def __init__(
+        self: IndexSetND[tuple[_S1, _S2, _S3, _S4]],
+        __iterable1: Iterable[tuple[_S1, _S2]],
+        __iterable2: Iterable[_S3],
+        __iterable3: Iterable[_S4],
         *,
         names: Sequence[str] | None = ...,
     ) -> None: ...
 
     @overload  # 4 = 1 + 2 + 1
     def __init__(
-        self: IndexSetND[tuple[_T1, _T2, _T3, _T4]],
-        __iterable1: Iterable[_T1],
-        __iterable2: Iterable[tuple[_T2, _T3]],
-        __iterable3: Iterable[_T4],
+        self: IndexSetND[tuple[_S1, _S2, _S3, _S4]],
+        __iterable1: Iterable[_S1],
+        __iterable2: Iterable[tuple[_S2, _S3]],
+        __iterable3: Iterable[_S4],
+        *,
+        names: Sequence[str] | None = ...,
+    ) -> None: ...
+
+    @overload  # 3 = 1 + 1 + 1
+    def __init__(
+        self: IndexSetND[tuple[_S1, _S2, _S3]],
+        __iterable1: Iterable[_S1],
+        __iterable2: Iterable[_S2],
+        __iterable3: Iterable[_S3],
         *,
         names: Sequence[str] | None = ...,
     ) -> None: ...
 
     @overload  # 4 = 1 + 1 + 1 + 1
     def __init__(
-        self: IndexSetND[tuple[_T1, _T2, _T3, _T4]],
-        __iterable1: Iterable[_T1],
-        __iterable2: Iterable[_T2],
-        __iterable3: Iterable[_T3],
-        __iterable4: Iterable[_T4],
+        self: IndexSetND[tuple[_S1, _S2, _S3, _S4]],
+        __iterable1: Iterable[_S1],
+        __iterable2: Iterable[_S2],
+        __iterable3: Iterable[_S3],
+        __iterable4: Iterable[_S4],
         *,
         names: Sequence[str] | None = ...,
     ) -> None: ...
 
     @overload  # 5 = 1 + 1 + 1 + 1 + 1
     def __init__(
-        self: IndexSetND[tuple[_T1, _T2, _T3, _T4, _T5]],
-        __iterable1: Iterable[_T1],
-        __iterable2: Iterable[_T2],
-        __iterable3: Iterable[_T3],
-        __iterable4: Iterable[_T4],
-        __iterable5: Iterable[_T5],
+        self: IndexSetND[tuple[_S1, _S2, _S3, _S4, _S5]],
+        __iterable1: Iterable[_S1],
+        __iterable2: Iterable[_S2],
+        __iterable3: Iterable[_S3],
+        __iterable4: Iterable[_S4],
+        __iterable5: Iterable[_S5],
         *,
         names: Sequence[str] | None = ...,
     ) -> None: ...
@@ -998,10 +1053,11 @@ class IndexSetND(IndexSetBase[ElemNDT]):
 
         if iterables:  # is populated
             type_error_msg = f'{self.__class__.__name__} expected iterable input(s)'
+            elems: list[Any]
 
             if len(iterables) > 1:
                 try:
-                    elems: list[tuple[Any, ...]] = list(product(*iterables))
+                    elems = list(product(*iterables))
                 except TypeError:
                     raise TypeError(type_error_msg) from None
 
@@ -1074,6 +1130,56 @@ class IndexSetND(IndexSetBase[ElemNDT]):
         p.text(f'{self._get_repr_header()}\n')
         p.pretty(self._list)
 
+    @overload
+    def __le__(
+        self: IndexSetND[tuple[_S1, _S2]],
+        other: IndexSetND[tuple[_S1, _S2]] | tuple[IndexSet1D[_S1], IndexSet1D[_S2]],
+        /,
+    ) -> bool: ...  # numpydoc ignore=GL08
+
+    @overload
+    def __le__(
+        self: IndexSetND[tuple[_S1, _S2, _S3]],
+        other: (
+            IndexSetND[tuple[_S1, _S2, _S3]]
+            | tuple[IndexSet1D[_S1], IndexSet1D[_S2], IndexSet1D[_S3]]
+        ),
+        /,
+    ) -> bool: ...  # numpydoc ignore=GL08
+
+    @overload
+    def __le__(
+        self: IndexSetND[tuple[_S1, _S2, _S3, _S4]],
+        other: (
+            IndexSetND[tuple[_S1, _S2, _S3, _S4]]
+            | tuple[IndexSet1D[_S1], IndexSet1D[_S2], IndexSet1D[_S3], IndexSet1D[_S4]]
+        ),
+        /,
+    ) -> bool: ...  # numpydoc ignore=GL08
+
+    @overload
+    def __le__(
+        self: IndexSetND[tuple[_S1, _S2, _S3, _S4, _S5]],
+        other: (
+            IndexSetND[tuple[_S1, _S2, _S3, _S4, _S5]]
+            | tuple[
+                IndexSet1D[_S1], IndexSet1D[_S2], IndexSet1D[_S3], IndexSet1D[_S4], IndexSet1D[_S5]
+            ]
+        ),
+        /,
+    ) -> bool: ...  # numpydoc ignore=GL08
+
+    @overload
+    def __le__(
+        self: IndexSetND[tuple[Any, Any, Any, Any, Any, Any, Unpack[tuple[Any, ...]]]],
+        other: tuple[IndexSet1D[Any], ...],
+        /,
+    ) -> bool: ...  # numpydoc ignore=GL08
+
+    @overload
+    def __le__(self, other: Self, /) -> bool: ...  # numpydoc ignore=GL08
+
+    @override
     def __le__(self, other: Self | tuple[IndexSet1D[Any], ...], /) -> bool:
         """Rich comparison method as a subset check: self <= other.
 
@@ -1269,6 +1375,17 @@ class IndexSetND(IndexSetBase[ElemNDT]):
 
         return unique
 
+    def _reset_cache_and_tuplelen(self) -> None:
+        """Clear `_index_groups` cache and delete `_tuplelen` if the IndexSet is now empty."""
+        if self._index_groups:  # is populated
+            self._index_groups.clear()
+
+        if not self._list:  # is empty
+            try:
+                del self._tuplelen
+            except AttributeError:
+                pass
+
     @override
     def _remove_elements(self, elems: list[ElemNDT]) -> None:
         """Remove elements from the IndexSet.
@@ -1287,12 +1404,7 @@ class IndexSetND(IndexSetBase[ElemNDT]):
             redefine when the user adds new elements.
         """
         super()._remove_elements(elems)
-
-        if self._index_groups:  # is pouplated
-            self._index_groups.clear()
-
-        if not self._list:  # is empty
-            del self._tuplelen
+        self._reset_cache_and_tuplelen()
 
     @override
     def clear(self) -> None:
@@ -1307,16 +1419,48 @@ class IndexSetND(IndexSetBase[ElemNDT]):
         #     redefine when the user adds new elements.
 
         super().clear()
+        self._reset_cache_and_tuplelen()
 
-        if self._index_groups:  # is pouplated
+    @override
+    def sort(
+        self,
+        *,
+        key: Callable[[ElemNDT], SupportsRichComparison] | None = None,
+        reverse: bool = False,
+    ) -> None:
+        """Sort the IndexSet in ascending order, in-place.
+
+        Parameters
+        ----------
+        key : function, optional
+            Function to be applied to each element to get comparison keys for sorting order, by
+            default ``None``.
+        reverse : bool, default ``False``
+            Whether to sort in descending order.
+
+        Raises
+        ------
+        TypeError
+            When the IndexSet has non-comparable elements i.e., heterogeneous data types like `int`
+            and `str` within the same IndexSet.
+        """
+        super().sort(key=key, reverse=reverse)
+        if self._index_groups:  # is populated
             self._index_groups.clear()
 
-        try:
-            del self._tuplelen
-        except AttributeError:
-            pass
+    @override
+    def reverse(self) -> None:
+        """Reverse the order of elements of the IndexSet, in-place."""
+        super().reverse()
+        if self._index_groups:  # is populated
+            self._index_groups.clear()
 
-    def intersection(self, *others: Iterable[Any]) -> IndexSetND[ElemNDT]:
+    @override
+    def __add__(self, other: Iterable[ElemNDT], /) -> IndexSetND[ElemNDT]:
+        # Concatenate `self` with `other` and return a new instance.
+        return super().__add__(other)
+
+    def intersection(self, *others: Iterable[object]) -> IndexSetND[ElemNDT]:
         """Return a new IndexSetND with elements common to the IndexSetND and all others.
 
         The new IndexSetND will have the same `names` attribute as the original.
@@ -1331,7 +1475,28 @@ class IndexSetND(IndexSetBase[ElemNDT]):
         """
         return IndexSetND(self._set.intersection(*others), names=self.names)
 
-    def union(self, *others: Iterable[ElemNDU]) -> IndexSetND[ElemNDT | ElemNDU]:
+    @overload
+    def union(  # numpydoc ignore=GL08
+        self, *others: Iterable[ElemNDT]
+    ) -> IndexSetND[ElemNDT]: ...
+
+    @overload
+    def union(  # numpydoc ignore=GL08
+        self: IndexSetND[tuple[_S1, _S2]], *others: Iterable[tuple[_U1, _U2]]
+    ) -> IndexSetND[tuple[_S1 | _U1, _S2 | _U2]]: ...
+
+    @overload
+    def union(  # numpydoc ignore=GL08
+        self: IndexSetND[tuple[_S1, _S2, _S3]], *others: Iterable[tuple[_U1, _U2, _U3]]
+    ) -> IndexSetND[tuple[_S1 | _U1, _S2 | _U2, _S3 | _U3]]: ...
+
+    @overload
+    def union(  # numpydoc ignore=GL08
+        self: IndexSetND[tuple[_S1, _S2, _S3, _S4]],
+        *others: Iterable[tuple[_U1, _U2, _U3, _U4]],
+    ) -> IndexSetND[tuple[_S1 | _U1, _S2 | _U2, _S3 | _U3, _S4 | _U4]]: ...
+
+    def union(self, *others: Iterable[Any]) -> IndexSetND[Any]:
         """Return a new IndexSetND with elements from the IndexSetND and all others.
 
         The new IndexSetND will have the same `names` attribute as the original.
@@ -1346,7 +1511,7 @@ class IndexSetND(IndexSetBase[ElemNDT]):
         """
         return IndexSetND(self._set.union(*others), names=self.names)
 
-    def difference(self, *others: Iterable[ElemNDT]) -> IndexSetND[ElemNDT]:
+    def difference(self, *others: Iterable[object]) -> IndexSetND[ElemNDT]:
         """Return a new IndexSetND with elements in the IndexSetND that are not in the others.
 
         The new IndexSetND will have the same `names` attribute as the original.
@@ -1397,10 +1562,30 @@ class IndexSetND(IndexSetBase[ElemNDT]):
 
         self._set &= other._set
         self._list = list(self._set)
+        self._reset_cache_and_tuplelen()
 
         return self
 
-    def __or__(self, other: IndexSetND[ElemNDT]) -> IndexSetND[ElemNDT]:
+    @overload
+    def __or__(self, other: IndexSetND[ElemNDT]) -> IndexSetND[ElemNDT]: ...  # numpydoc ignore=GL08
+
+    @overload
+    def __or__(
+        self: IndexSetND[tuple[_S1, _S2]], other: IndexSetND[tuple[_U1, _U2]]
+    ) -> IndexSetND[tuple[_S1 | _U1, _S2 | _U2]]: ...  # numpydoc ignore=GL08
+
+    @overload
+    def __or__(
+        self: IndexSetND[tuple[_S1, _S2, _S3]], other: IndexSetND[tuple[_U1, _U2, _U3]]
+    ) -> IndexSetND[tuple[_S1 | _U1, _S2 | _U2, _S3 | _U3]]: ...  # numpydoc ignore=GL08
+
+    @overload
+    def __or__(
+        self: IndexSetND[tuple[_S1, _S2, _S3, _S4]],
+        other: IndexSetND[tuple[_U1, _U2, _U3, _U4]],
+    ) -> IndexSetND[tuple[_S1 | _U1, _S2 | _U2, _S3 | _U3, _S4 | _U4]]: ...  # numpydoc ignore=GL08
+
+    def __or__(self, other: IndexSetND[Any]) -> IndexSetND[Any]:
         # Set operation `self | other` (union), if other is also of the same type.
         # Returns a new instance with the same `names` attribute.
         if not isinstance(other, IndexSetND):
@@ -1421,6 +1606,7 @@ class IndexSetND(IndexSetBase[ElemNDT]):
 
         self._set |= other._set
         self._list = list(self._set)
+        self._reset_cache_and_tuplelen()
 
         return self
 
@@ -1445,6 +1631,7 @@ class IndexSetND(IndexSetBase[ElemNDT]):
 
         self._set -= other._set
         self._list = list(self._set)
+        self._reset_cache_and_tuplelen()
 
         return self
 
@@ -1469,6 +1656,7 @@ class IndexSetND(IndexSetBase[ElemNDT]):
 
         self._set ^= other._set
         self._list = list(self._set)
+        self._reset_cache_and_tuplelen()
 
         return self
 
@@ -1519,7 +1707,197 @@ class IndexSetND(IndexSetBase[ElemNDT]):
 
         return group
 
-    def subset(self, *pattern: Any) -> list[ElemNDT]:
+    # 2D subset overloads
+    @overload
+    def subset(  # numpydoc ignore=GL08
+        self: IndexSetND[tuple[_S1, _S2]], __d1: _S1, __d2: Literal['*']
+    ) -> list[tuple[_S1, _S2]]: ...
+
+    @overload
+    def subset(  # numpydoc ignore=GL08
+        self: IndexSetND[tuple[_S1, _S2]], __d1: Literal['*'], __d2: _S2
+    ) -> list[tuple[_S1, _S2]]: ...
+
+    # 3D subset overloads
+    @overload
+    def subset(  # numpydoc ignore=GL08
+        self: IndexSetND[tuple[_S1, _S2, _S3]],
+        __d1: _S1,
+        __d2: Literal['*'],
+        __d3: Literal['*'],
+    ) -> list[tuple[_S1, _S2, _S3]]: ...
+
+    @overload
+    def subset(  # numpydoc ignore=GL08
+        self: IndexSetND[tuple[_S1, _S2, _S3]],
+        __d1: Literal['*'],
+        __d2: _S2,
+        __d3: Literal['*'],
+    ) -> list[tuple[_S1, _S2, _S3]]: ...
+
+    @overload
+    def subset(  # numpydoc ignore=GL08
+        self: IndexSetND[tuple[_S1, _S2, _S3]],
+        __d1: Literal['*'],
+        __d2: Literal['*'],
+        __d3: _S3,
+    ) -> list[tuple[_S1, _S2, _S3]]: ...
+
+    @overload
+    def subset(  # numpydoc ignore=GL08
+        self: IndexSetND[tuple[_S1, _S2, _S3]], __d1: _S1, __d2: _S2, __d3: Literal['*']
+    ) -> list[tuple[_S1, _S2, _S3]]: ...
+
+    @overload
+    def subset(  # numpydoc ignore=GL08
+        self: IndexSetND[tuple[_S1, _S2, _S3]], __d1: _S1, __d2: Literal['*'], __d3: _S3
+    ) -> list[tuple[_S1, _S2, _S3]]: ...
+
+    @overload
+    def subset(  # numpydoc ignore=GL08
+        self: IndexSetND[tuple[_S1, _S2, _S3]], __d1: Literal['*'], __d2: _S2, __d3: _S3
+    ) -> list[tuple[_S1, _S2, _S3]]: ...
+
+    # 4D subset overloads
+    @overload
+    def subset(  # numpydoc ignore=GL08
+        self: IndexSetND[tuple[_S1, _S2, _S3, _S4]],
+        __d1: _S1,
+        __d2: Literal['*'],
+        __d3: Literal['*'],
+        __d4: Literal['*'],
+    ) -> list[tuple[_S1, _S2, _S3, _S4]]: ...
+
+    @overload
+    def subset(  # numpydoc ignore=GL08
+        self: IndexSetND[tuple[_S1, _S2, _S3, _S4]],
+        __d1: Literal['*'],
+        __d2: _S2,
+        __d3: Literal['*'],
+        __d4: Literal['*'],
+    ) -> list[tuple[_S1, _S2, _S3, _S4]]: ...
+
+    @overload
+    def subset(  # numpydoc ignore=GL08
+        self: IndexSetND[tuple[_S1, _S2, _S3, _S4]],
+        __d1: Literal['*'],
+        __d2: Literal['*'],
+        __d3: _S3,
+        __d4: Literal['*'],
+    ) -> list[tuple[_S1, _S2, _S3, _S4]]: ...
+
+    @overload
+    def subset(  # numpydoc ignore=GL08
+        self: IndexSetND[tuple[_S1, _S2, _S3, _S4]],
+        __d1: Literal['*'],
+        __d2: Literal['*'],
+        __d3: Literal['*'],
+        __d4: _S4,
+    ) -> list[tuple[_S1, _S2, _S3, _S4]]: ...
+
+    @overload
+    def subset(  # numpydoc ignore=GL08
+        self: IndexSetND[tuple[_S1, _S2, _S3, _S4]],
+        __d1: _S1,
+        __d2: _S2,
+        __d3: Literal['*'],
+        __d4: Literal['*'],
+    ) -> list[tuple[_S1, _S2, _S3, _S4]]: ...
+
+    @overload
+    def subset(  # numpydoc ignore=GL08
+        self: IndexSetND[tuple[_S1, _S2, _S3, _S4]],
+        __d1: _S1,
+        __d2: Literal['*'],
+        __d3: _S3,
+        __d4: Literal['*'],
+    ) -> list[tuple[_S1, _S2, _S3, _S4]]: ...
+
+    @overload
+    def subset(  # numpydoc ignore=GL08
+        self: IndexSetND[tuple[_S1, _S2, _S3, _S4]],
+        __d1: _S1,
+        __d2: Literal['*'],
+        __d3: Literal['*'],
+        __d4: _S4,
+    ) -> list[tuple[_S1, _S2, _S3, _S4]]: ...
+
+    @overload
+    def subset(  # numpydoc ignore=GL08
+        self: IndexSetND[tuple[_S1, _S2, _S3, _S4]],
+        __d1: Literal['*'],
+        __d2: _S2,
+        __d3: _S3,
+        __d4: Literal['*'],
+    ) -> list[tuple[_S1, _S2, _S3, _S4]]: ...
+
+    @overload
+    def subset(  # numpydoc ignore=GL08
+        self: IndexSetND[tuple[_S1, _S2, _S3, _S4]],
+        __d1: Literal['*'],
+        __d2: _S2,
+        __d3: Literal['*'],
+        __d4: _S4,
+    ) -> list[tuple[_S1, _S2, _S3, _S4]]: ...
+
+    @overload
+    def subset(  # numpydoc ignore=GL08
+        self: IndexSetND[tuple[_S1, _S2, _S3, _S4]],
+        __d1: Literal['*'],
+        __d2: Literal['*'],
+        __d3: _S3,
+        __d4: _S4,
+    ) -> list[tuple[_S1, _S2, _S3, _S4]]: ...
+
+    @overload
+    def subset(  # numpydoc ignore=GL08
+        self: IndexSetND[tuple[_S1, _S2, _S3, _S4]],
+        __d1: _S1,
+        __d2: _S2,
+        __d3: _S3,
+        __d4: Literal['*'],
+    ) -> list[tuple[_S1, _S2, _S3, _S4]]: ...
+
+    @overload
+    def subset(  # numpydoc ignore=GL08
+        self: IndexSetND[tuple[_S1, _S2, _S3, _S4]],
+        __d1: _S1,
+        __d2: _S2,
+        __d3: Literal['*'],
+        __d4: _S4,
+    ) -> list[tuple[_S1, _S2, _S3, _S4]]: ...
+
+    @overload
+    def subset(  # numpydoc ignore=GL08
+        self: IndexSetND[tuple[_S1, _S2, _S3, _S4]],
+        __d1: _S1,
+        __d2: Literal['*'],
+        __d3: _S3,
+        __d4: _S4,
+    ) -> list[tuple[_S1, _S2, _S3, _S4]]: ...
+
+    @overload
+    def subset(  # numpydoc ignore=GL08
+        self: IndexSetND[tuple[_S1, _S2, _S3, _S4]],
+        __d1: Literal['*'],
+        __d2: _S2,
+        __d3: _S3,
+        __d4: _S4,
+    ) -> list[tuple[_S1, _S2, _S3, _S4]]: ...
+
+    # 5D+ fallback
+    @overload
+    def subset(  # numpydoc ignore=GL08
+        self,
+        __d1: Any,
+        __d2: Any,
+        __d3: Any,
+        __d4: Any,
+        __d5: Any,
+        *pattern: Any,
+    ) -> list[ElemNDT]: ...
+
+    def subset(self, *pattern: Any) -> list[ElemNDT]:  # type: ignore[misc]
         """Get a subset of the IndexSet with a wildcard pattern.
 
         Parameters
@@ -1579,6 +1957,189 @@ class IndexSetND(IndexSetBase[ElemNDT]):
         # an empty list) for keys that are not preset prior to returning the empty list. Can
         # directly return an empty list with get instead.
         return self._groupby(*indices).get(given, list())
+
+    # 1-index Literal squeeze overloads
+    @overload
+    def squeeze(  # numpydoc ignore=GL08
+        self: IndexSetND[tuple[_S1, Unpack[tuple[Any, ...]]]],
+        __i1: Literal[0],
+        *,
+        names: Sequence[str] | None = ...,
+    ) -> IndexSet1D[_S1]: ...
+
+    @overload
+    def squeeze(  # numpydoc ignore=GL08
+        self: IndexSetND[tuple[Any, _S2, Unpack[tuple[Any, ...]]]],
+        __i1: Literal[1],
+        *,
+        names: Sequence[str] | None = ...,
+    ) -> IndexSet1D[_S2]: ...
+
+    @overload
+    def squeeze(  # numpydoc ignore=GL08
+        self: IndexSetND[tuple[Any, Any, _S3, Unpack[tuple[Any, ...]]]],
+        __i1: Literal[2],
+        *,
+        names: Sequence[str] | None = ...,
+    ) -> IndexSet1D[_S3]: ...
+
+    @overload
+    def squeeze(  # numpydoc ignore=GL08
+        self: IndexSetND[tuple[Any, Any, Any, _S4, Unpack[tuple[Any, ...]]]],
+        __i1: Literal[3],
+        *,
+        names: Sequence[str] | None = ...,
+    ) -> IndexSet1D[_S4]: ...
+
+    # 2-index Literal squeeze overloads
+    @overload
+    def squeeze(  # numpydoc ignore=GL08
+        self: IndexSetND[tuple[_S1, _S2, Any, Unpack[tuple[Any, ...]]]],
+        __i1: Literal[0],
+        __i2: Literal[1],
+        *,
+        names: Sequence[str] | None = ...,
+    ) -> IndexSetND[tuple[_S1, _S2]]: ...
+
+    @overload
+    def squeeze(  # numpydoc ignore=GL08
+        self: IndexSetND[tuple[_S1, _S2, Any, Unpack[tuple[Any, ...]]]],
+        __i1: Literal[1],
+        __i2: Literal[0],
+        *,
+        names: Sequence[str] | None = ...,
+    ) -> IndexSetND[tuple[_S2, _S1]]: ...
+
+    @overload
+    def squeeze(  # numpydoc ignore=GL08
+        self: IndexSetND[tuple[_S1, Any, _S3, Unpack[tuple[Any, ...]]]],
+        __i1: Literal[0],
+        __i2: Literal[2],
+        *,
+        names: Sequence[str] | None = ...,
+    ) -> IndexSetND[tuple[_S1, _S3]]: ...
+
+    @overload
+    def squeeze(  # numpydoc ignore=GL08
+        self: IndexSetND[tuple[_S1, Any, _S3, Unpack[tuple[Any, ...]]]],
+        __i1: Literal[2],
+        __i2: Literal[0],
+        *,
+        names: Sequence[str] | None = ...,
+    ) -> IndexSetND[tuple[_S3, _S1]]: ...
+
+    @overload
+    def squeeze(  # numpydoc ignore=GL08
+        self: IndexSetND[tuple[Any, _S2, _S3, Unpack[tuple[Any, ...]]]],
+        __i1: Literal[1],
+        __i2: Literal[2],
+        *,
+        names: Sequence[str] | None = ...,
+    ) -> IndexSetND[tuple[_S2, _S3]]: ...
+
+    @overload
+    def squeeze(  # numpydoc ignore=GL08
+        self: IndexSetND[tuple[Any, _S2, _S3, Unpack[tuple[Any, ...]]]],
+        __i1: Literal[2],
+        __i2: Literal[1],
+        *,
+        names: Sequence[str] | None = ...,
+    ) -> IndexSetND[tuple[_S3, _S2]]: ...
+
+    @overload
+    def squeeze(  # numpydoc ignore=GL08
+        self: IndexSetND[tuple[_S1, Any, Any, _S4, Unpack[tuple[Any, ...]]]],
+        __i1: Literal[0],
+        __i2: Literal[3],
+        *,
+        names: Sequence[str] | None = ...,
+    ) -> IndexSetND[tuple[_S1, _S4]]: ...
+
+    @overload
+    def squeeze(  # numpydoc ignore=GL08
+        self: IndexSetND[tuple[_S1, Any, Any, _S4, Unpack[tuple[Any, ...]]]],
+        __i1: Literal[3],
+        __i2: Literal[0],
+        *,
+        names: Sequence[str] | None = ...,
+    ) -> IndexSetND[tuple[_S4, _S1]]: ...
+
+    @overload
+    def squeeze(  # numpydoc ignore=GL08
+        self: IndexSetND[tuple[Any, _S2, Any, _S4, Unpack[tuple[Any, ...]]]],
+        __i1: Literal[1],
+        __i2: Literal[3],
+        *,
+        names: Sequence[str] | None = ...,
+    ) -> IndexSetND[tuple[_S2, _S4]]: ...
+
+    @overload
+    def squeeze(  # numpydoc ignore=GL08
+        self: IndexSetND[tuple[Any, _S2, Any, _S4, Unpack[tuple[Any, ...]]]],
+        __i1: Literal[3],
+        __i2: Literal[1],
+        *,
+        names: Sequence[str] | None = ...,
+    ) -> IndexSetND[tuple[_S4, _S2]]: ...
+
+    @overload
+    def squeeze(  # numpydoc ignore=GL08
+        self: IndexSetND[tuple[Any, Any, _S3, _S4, Unpack[tuple[Any, ...]]]],
+        __i1: Literal[2],
+        __i2: Literal[3],
+        *,
+        names: Sequence[str] | None = ...,
+    ) -> IndexSetND[tuple[_S3, _S4]]: ...
+
+    @overload
+    def squeeze(  # numpydoc ignore=GL08
+        self: IndexSetND[tuple[Any, Any, _S3, _S4, Unpack[tuple[Any, ...]]]],
+        __i1: Literal[3],
+        __i2: Literal[2],
+        *,
+        names: Sequence[str] | None = ...,
+    ) -> IndexSetND[tuple[_S4, _S3]]: ...
+
+    # 3-index Literal squeeze overloads for 4D+ sets
+    @overload
+    def squeeze(  # numpydoc ignore=GL08
+        self: IndexSetND[tuple[_S1, _S2, _S3, Any, Unpack[tuple[Any, ...]]]],
+        __i1: Literal[0],
+        __i2: Literal[1],
+        __i3: Literal[2],
+        *,
+        names: Sequence[str] | None = ...,
+    ) -> IndexSetND[tuple[_S1, _S2, _S3]]: ...
+
+    @overload
+    def squeeze(  # numpydoc ignore=GL08
+        self: IndexSetND[tuple[_S1, _S2, Any, _S4, Unpack[tuple[Any, ...]]]],
+        __i1: Literal[0],
+        __i2: Literal[1],
+        __i3: Literal[3],
+        *,
+        names: Sequence[str] | None = ...,
+    ) -> IndexSetND[tuple[_S1, _S2, _S4]]: ...
+
+    @overload
+    def squeeze(  # numpydoc ignore=GL08
+        self: IndexSetND[tuple[_S1, Any, _S3, _S4, Unpack[tuple[Any, ...]]]],
+        __i1: Literal[0],
+        __i2: Literal[2],
+        __i3: Literal[3],
+        *,
+        names: Sequence[str] | None = ...,
+    ) -> IndexSetND[tuple[_S1, _S3, _S4]]: ...
+
+    @overload
+    def squeeze(  # numpydoc ignore=GL08
+        self: IndexSetND[tuple[Any, _S2, _S3, _S4, Unpack[tuple[Any, ...]]]],
+        __i1: Literal[1],
+        __i2: Literal[2],
+        __i3: Literal[3],
+        *,
+        names: Sequence[str] | None = ...,
+    ) -> IndexSetND[tuple[_S2, _S3, _S4]]: ...
 
     @overload
     def squeeze(  # numpydoc ignore=GL08
@@ -1672,8 +2233,3 @@ class IndexSetND(IndexSetBase[ElemNDT]):
             name = None
 
         return IndexSet1D((key[0] for key in grouped), name=name)
-
-
-# Register as virtual subclass of collections.abc.MutableSequence
-MutableSequence.register(IndexSet1D)
-MutableSequence.register(IndexSetND)
