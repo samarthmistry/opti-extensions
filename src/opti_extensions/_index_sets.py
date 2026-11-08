@@ -34,6 +34,7 @@ from typing import (
 from typing_extensions import Self, Unpack, override
 
 if TYPE_CHECKING:
+    import pandas as pd
     from _typeshed import SupportsRichComparison
 
     from ._misc_types import MinimalRepresentationPrinter
@@ -642,6 +643,116 @@ class IndexSet1D(IndexSetBase[Elem1DT]):
         p.text(f'{self._get_repr_header()}\n')
         p.pretty(self._list)
 
+    @classmethod
+    def from_series(
+        cls,
+        series: pd.Series[Elem1DT],  # type: ignore[type-var]
+        *,
+        name: str | None = None,
+    ) -> IndexSet1D[Elem1DT]:
+        """Create an IndexSet1D from a pandas Series.
+
+        Parameters
+        ----------
+        series : Series
+            Input pandas Series whose values form the IndexSet1D.
+        name : str, optional
+            Name for the IndexSet. If not provided, defaults to the Series' `name` attribute
+            (as str) if set, or None.
+
+        Returns
+        -------
+        IndexSet1D
+
+        Raises
+        ------
+        ValueError
+            If the Series is empty.
+        ValueError
+            If the Series contains duplicate values.
+        TypeError
+            If the Series contains non-scalar values (any iterable except string).
+
+        See Also
+        --------
+        IndexSet1D.from_index : Create an IndexSet1D from a pandas Index.
+        IndexSetND.from_dataframe : Create an IndexSetND from a pandas DataFrame.
+        IndexSetND.from_index : Create an IndexSetND from a pandas MultiIndex.
+
+        Examples
+        --------
+        >>> import pandas as pd
+        >>> from opti_extensions import IndexSet1D
+        >>> s = pd.Series(['Delhi', 'Seattle', 'Tokyo'], name='CITY')
+        >>> IndexSet1D.from_series(s)
+        IndexSet1D: (CITY)
+        ['Delhi', 'Seattle', 'Tokyo']
+        >>> IndexSet1D.from_series(s, name='CUSTOM')
+        IndexSet1D: (CUSTOM)
+        ['Delhi', 'Seattle', 'Tokyo']
+        """
+        if series.empty:
+            raise ValueError(f'{series.__class__.__name__} is empty')
+        if name is None and series.name is not None:
+            name = str(series.name)
+        return cls(series, name=name)
+
+    @classmethod
+    def from_index(
+        cls,
+        index: pd.Index[Elem1DT],  # type: ignore[type-var]
+        *,
+        name: str | None = None,
+    ) -> IndexSet1D[Elem1DT]:
+        """Create an IndexSet1D from a pandas Index.
+
+        Parameters
+        ----------
+        index : Index
+            Input pandas single-level Index whose values form the IndexSet1D.
+        name : str, optional
+            Name for the IndexSet. If not provided, defaults to the Index's `name` attribute
+            (as str) if set, or None.
+
+        Returns
+        -------
+        IndexSet1D
+
+        Raises
+        ------
+        ValueError
+            If the Index is empty.
+        ValueError
+            If the Index contains duplicate values.
+        TypeError
+            If the Index has non-scalar values (any iterable except string) or is a MultiIndex.
+
+        See Also
+        --------
+        IndexSet1D.from_series : Create an IndexSet1D from a pandas Series.
+        IndexSetND.from_dataframe : Create an IndexSetND from a pandas DataFrame.
+        IndexSetND.from_index : Create an IndexSetND from a pandas MultiIndex.
+
+        Examples
+        --------
+        >>> import pandas as pd
+        >>> from opti_extensions import IndexSet1D
+        >>> idx = pd.Index(['WH-A', 'WH-B', 'WH-C'], name='WAREHOUSE')
+        >>> IndexSet1D.from_index(idx)
+        IndexSet1D: (WAREHOUSE)
+        ['WH-A', 'WH-B', 'WH-C']
+        >>> IndexSet1D.from_index(idx, name='CUSTOM')
+        IndexSet1D: (CUSTOM)
+        ['WH-A', 'WH-B', 'WH-C']
+        """
+        if index.empty:
+            raise ValueError(f'{index.__class__.__name__} is empty')
+        if getattr(index, 'nlevels', 1) > 1:
+            raise TypeError('MultiIndex is not supported by IndexSet1D; use IndexSetND.from_index')
+        if name is None and index.name is not None:
+            name = str(index.name)
+        return cls(index, name=name)
+
     @staticmethod
     def _check_allscalars(elems: list[Any]) -> None:
         """Check if a list contains all 1-dim scalar elements (no iterables except string).
@@ -1129,6 +1240,157 @@ class IndexSetND(IndexSetBase[ElemNDT]):
         # https://ipython.readthedocs.io/en/stable/api/generated/IPython.lib.pretty.html#extending
         p.text(f'{self._get_repr_header()}\n')
         p.pretty(self._list)
+
+    @classmethod
+    def from_dataframe(
+        cls,
+        df: pd.DataFrame,
+        *,
+        columns: Sequence[str] | None = None,
+        names: Sequence[str] | None = None,
+    ) -> IndexSetND[tuple[Any, ...]]:
+        """Create an IndexSetND from a pandas DataFrame.
+
+        Parameters
+        ----------
+        df : DataFrame
+            Input pandas DataFrame whose rows form the tuple elements of the IndexSetND.
+        columns : sequence of str, optional
+            Subset of DataFrame columns to use. If not specified, all columns are used.
+        names : sequence of str, optional
+            Dimension names for the IndexSetND. If not specified, defaults to the DataFrame's
+            column names (as strings).
+
+        Returns
+        -------
+        IndexSetND
+
+        Raises
+        ------
+        ValueError
+            If the DataFrame is empty.
+        ValueError
+            If the DataFrame rows contain duplicates.
+        TypeError
+            If the DataFrame contains non-scalar values (any iterable except string).
+
+        See Also
+        --------
+        IndexSetND.from_index : Create an IndexSetND from a pandas MultiIndex.
+        IndexSet1D.from_series : Create an IndexSet1D from a pandas Series.
+        IndexSet1D.from_index : Create an IndexSet1D from a pandas Index.
+
+        Examples
+        --------
+        >>> import pandas as pd
+        >>> from opti_extensions import IndexSetND
+        >>> df = pd.DataFrame(
+        ...     {
+        ...         'PRODUCT': ['chair', 'chair', 'desk', 'desk'],
+        ...         'WAREHOUSE': ['WH-A', 'WH-B', 'WH-B', 'WH-C'],
+        ...         'PERIOD': [0, 1, 0, 1],
+        ...     }
+        ... )
+        >>> IndexSetND.from_dataframe(df)
+        IndexSetND: (PRODUCT, WAREHOUSE, PERIOD)
+        [('chair', 'WH-A', 0),
+         ('chair', 'WH-B', 1),
+         ('desk', 'WH-B', 0),
+         ('desk', 'WH-C', 1)]
+        >>> IndexSetND.from_dataframe(df, columns=['PRODUCT', 'PERIOD'], names=['P', 'T'])
+        IndexSetND: (P, T)
+        [('chair', 0),
+         ('chair', 1),
+         ('desk', 0),
+         ('desk', 1)]
+        """
+        if df.empty:
+            raise ValueError(f'{df.__class__.__name__} is empty')
+        if columns is not None:
+            cols = list(columns)
+            if not cols:
+                raise ValueError('`columns` cannot be empty')
+            df = df[cols]
+        vals_to_check = (
+            df.select_dtypes(exclude=['number', 'datetime', 'datetimetz', 'timedelta'])
+            .to_numpy()
+            .flat
+        )
+        if any(isinstance(i, Iterable) and not isinstance(i, str) for i in vals_to_check):
+            raise TypeError('DataFrame has non-scalar value(s) (no iterables except string)')
+        if names is None:
+            import pandas as pd
+
+            def _is_na(val: object) -> bool:
+                if isinstance(val, tuple):
+                    return any(_is_na(item) for item in val)
+                return bool(pd.isna(cast(Any, val)))
+
+            names = None if any(_is_na(x) for x in df.columns) else list(map(str, df.columns))
+        return cls(df.to_records(index=False).tolist(), names=names)
+
+    @classmethod
+    def from_index(
+        cls,
+        index: pd.MultiIndex,
+        *,
+        names: Sequence[str] | None = None,
+    ) -> IndexSetND[tuple[Any, ...]]:
+        """Create an IndexSetND from a pandas MultiIndex.
+
+        Parameters
+        ----------
+        index : MultiIndex
+            Input pandas MultiIndex whose tuples form the elements of the IndexSetND.
+        names : sequence of str, optional
+            Dimension names for the IndexSetND. If not specified, defaults to the MultiIndex's
+            level names (as strings).
+
+        Returns
+        -------
+        IndexSetND
+
+        Raises
+        ------
+        ValueError
+            If the MultiIndex is empty.
+        ValueError
+            If the MultiIndex contains duplicate tuple elements.
+        TypeError
+            If the index is not a MultiIndex (single-level Index).
+        TypeError
+            If the MultiIndex contains non-scalar values (any iterable except string).
+
+        See Also
+        --------
+        IndexSetND.from_dataframe : Create an IndexSetND from a pandas DataFrame.
+        IndexSet1D.from_index : Create an IndexSet1D from a pandas Index.
+        IndexSet1D.from_series : Create an IndexSet1D from a pandas Series.
+
+        Examples
+        --------
+        >>> import pandas as pd
+        >>> from opti_extensions import IndexSetND
+        >>> mi = pd.MultiIndex.from_tuples(
+        ...     [('EAST', 'WH-A'), ('EAST', 'WH-B'), ('WEST', 'WH-C')],
+        ...     names=('ZONE', 'WAREHOUSE'),
+        ... )
+        >>> IndexSetND.from_index(mi)
+        IndexSetND: (ZONE, WAREHOUSE)
+        [('EAST', 'WH-A'), ('EAST', 'WH-B'), ('WEST', 'WH-C')]
+        >>> IndexSetND.from_index(mi, names=['Z', 'W'])
+        IndexSetND: (Z, W)
+        [('EAST', 'WH-A'), ('EAST', 'WH-B'), ('WEST', 'WH-C')]
+        """
+        if index.empty:
+            raise ValueError(f'{index.__class__.__name__} is empty')
+        if getattr(index, 'nlevels', 1) <= 1:
+            raise TypeError(
+                'Single-level Index is not supported by IndexSetND; use IndexSet1D.from_index'
+            )
+        if names is None:
+            names = None if any(x is None for x in index.names) else list(map(str, index.names))
+        return cls(index, names=names)
 
     @overload
     def __le__(

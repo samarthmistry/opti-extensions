@@ -6,14 +6,19 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterable, MutableMapping
-from typing import TYPE_CHECKING, Any, cast
+from collections.abc import Hashable
+from typing import TYPE_CHECKING, Any, Generic, TypeVar, cast, overload
 
 from ._index_sets import IndexSet1D, IndexSetND
 from ._param_dicts import ParamDict1D, ParamDictND
 
 if TYPE_CHECKING:
-    from pandas import DataFrame, Index, Series
+    from pandas import DataFrame, Index, MultiIndex, Series
+
+SeriesValT = TypeVar('SeriesValT')
+IdxElemT = TypeVar('IdxElemT')
+Elem1DT = TypeVar('Elem1DT', bound=Hashable)
+ParamT = TypeVar('ParamT', bound=int | float)
 
 
 def _check_empty(pd_obj: Series[Any] | DataFrame | Index[Any]) -> None:
@@ -25,17 +30,6 @@ def _check_empty(pd_obj: Series[Any] | DataFrame | Index[Any]) -> None:
     """
     if pd_obj.empty:
         raise ValueError(f'{pd_obj.__class__.__name__} is empty')
-
-
-def _check_duplicate_idx(pd_obj: Series[Any] | DataFrame) -> None:
-    """Raise a ValueError if a pandas object has duplicate index-label(s).
-
-    Parameters
-    ----------
-    pd_obj : Series or DataFrame
-    """
-    if pd_obj.index.size > len(set(pd_obj.index)):
-        raise ValueError(f'{pd_obj.__class__.__name__} has duplicate index-label(s)')
 
 
 class DataFrameAccessor:
@@ -128,20 +122,7 @@ class DataFrameAccessor:
          ('desk', 1)]
         """
         if self._df.columns.size > 1:  # multi-column df
-            vals_to_check = (
-                self._df.select_dtypes(exclude=['number', 'datetime', 'datetimetz', 'timedelta'])
-                .to_numpy()
-                .flat
-            )
-            if any(isinstance(i, Iterable) and not isinstance(i, str) for i in vals_to_check):
-                raise TypeError('DataFrame has non-scalar value(s) (no iterables except string)')
-
-            names = (
-                None
-                if any(x is None for x in self._df.columns)
-                else list(map(str, self._df.columns))
-            )
-            return IndexSetND(self._df.to_records(index=False).tolist(), names=names)
+            return IndexSetND.from_dataframe(self._df)
 
         else:  # single-column df
             return IndexSet1D(self._df.iloc[:, 0].tolist(), name=str(self._df.columns[0]))
@@ -237,36 +218,18 @@ class DataFrameAccessor:
          ('Seattle', 'Tokyo'): 7695,
          ('Tokyo', 'Delhi'): 5830}
         """
-        _check_duplicate_idx(self._df)
-
         if self._df.columns.size == 1:  # single-column df
             if self._df.index.nlevels > 1:  # multi-level index
-                key_names = (
-                    None
-                    if any(x is None for x in self._df.index.names)
-                    else list(map(str, self._df.index.names))
-                )
-                return ParamDictND(
-                    cast(
-                        MutableMapping[tuple[Any, ...], int | float], self._df.iloc[:, 0].to_dict()
-                    ),
-                    key_names=key_names,
-                    value_name=str(self._df.columns[0]),
-                )
+                return ParamDictND.from_series(self._df.iloc[:, 0])
 
             else:  # single-level index
-                key_name = None if self._df.index.name is None else str(self._df.index.name)
-                return ParamDict1D(
-                    self._df.iloc[:, 0].to_dict(),
-                    key_name=key_name,
-                    value_name=str(self._df.columns[0]),
-                )
+                return ParamDict1D.from_series(self._df.iloc[:, 0])
 
         else:  # multi-column df
             raise ValueError('`to_paramdict` does not support multi-column DataFrame')
 
 
-class SeriesAccessor:
+class SeriesAccessor(Generic[SeriesValT]):
     """Accessor to cast pandas Series into IndexSet1D and ParamDict1D/ParamDictND.
 
     Parameters
@@ -274,11 +237,11 @@ class SeriesAccessor:
     series : Series
     """
 
-    def __init__(self, series: Series[Any]) -> None:
+    def __init__(self, series: Series[SeriesValT]) -> None:  # type: ignore[type-var]
         _check_empty(series)
         self._series = series
 
-    def to_indexset(self) -> IndexSet1D[Any]:
+    def to_indexset(self: SeriesAccessor[Elem1DT]) -> IndexSet1D[Elem1DT]:
         """Cast a Series into an IndexSet1D.
 
         Note: The `opti-extensions` package has to be imported first to use this method with
@@ -322,12 +285,11 @@ class SeriesAccessor:
         IndexSet1D: (CITY)
         ['Delhi', 'Seattle', 'Tokyo']
         """
-        name = None if self._series.name is None else str(self._series.name)
-        return IndexSet1D(self._series, name=name)
+        return IndexSet1D.from_series(self._series)
 
     def to_paramdict(
-        self,
-    ) -> ParamDict1D[Any, int | float] | ParamDictND[tuple[Any, ...], int | float]:
+        self: SeriesAccessor[ParamT],
+    ) -> ParamDict1D[Any, ParamT] | ParamDictND[tuple[Any, ...], ParamT]:
         """Cast a Series into a ParamDict1D/ParamDictND.
 
         Note: The `opti-extensions` package has to be imported first to use this method with
@@ -415,28 +377,13 @@ class SeriesAccessor:
          ('Seattle', 'Tokyo'): 7695,
          ('Tokyo', 'Delhi'): 5830}
         """
-        _check_duplicate_idx(self._series)
-
-        value_name = None if self._series.name is None else str(self._series.name)
-
         if self._series.index.nlevels > 1:  # multi-level index
-            key_names = (
-                None
-                if any(x is None for x in self._series.index.names)
-                else list(map(str, self._series.index.names))
-            )
-            return ParamDictND(
-                cast(MutableMapping[tuple[Any, ...], int | float], self._series.to_dict()),
-                key_names=key_names,
-                value_name=value_name,
-            )
-
+            return ParamDictND.from_series(self._series)
         else:  # single-level index
-            key_name = None if self._series.index.name is None else str(self._series.index.name)
-            return ParamDict1D(self._series.to_dict(), key_name=key_name, value_name=value_name)
+            return ParamDict1D.from_series(self._series)
 
 
-class IndexAccessor:
+class IndexAccessor(Generic[IdxElemT]):
     """Accessor to cast pandas Index into IndexSet1D/IndexSetND.
 
     Parameters
@@ -444,9 +391,25 @@ class IndexAccessor:
     idx : Index
     """
 
+    @overload
+    def __init__(
+        self: IndexAccessor[tuple[Any, ...]], idx: MultiIndex
+    ) -> None: ...  # numpydoc ignore=GL08
+
+    @overload
+    def __init__(self: IndexAccessor[Elem1DT], idx: Index[Elem1DT]) -> None: ...  # type: ignore[type-var] # numpydoc ignore=GL08
+
     def __init__(self, idx: Index[Any]) -> None:
         _check_empty(idx)
         self._idx = idx
+
+    @overload
+    def to_indexset(self: IndexAccessor[tuple[Any, ...]]) -> IndexSetND[tuple[Any, ...]]: ...  # type: ignore[overload-overlap] # numpydoc ignore=GL08
+
+    @overload
+    def to_indexset(
+        self: IndexAccessor[Elem1DT],
+    ) -> IndexSet1D[Elem1DT]: ...  # numpydoc ignore=GL08
 
     def to_indexset(self) -> IndexSet1D[Any] | IndexSetND[tuple[Any, ...]]:
         """Cast an Index into an IndexSet1D/IndexSetND.
@@ -585,11 +548,6 @@ class IndexAccessor:
         [('Asia', 'Delhi'), ('Americas', 'Seattle'), ('Asia', 'Tokyo')]
         """
         if self._idx.nlevels > 1:  # multi-level index
-            names = (
-                None if any(x is None for x in self._idx.names) else list(map(str, self._idx.names))
-            )
-            return IndexSetND(self._idx, names=names)
-
+            return IndexSetND.from_index(cast('MultiIndex', self._idx))
         else:
-            name = None if self._idx.name is None else str(self._idx.name)
-            return IndexSet1D(self._idx, name=name)
+            return IndexSet1D.from_index(self._idx)

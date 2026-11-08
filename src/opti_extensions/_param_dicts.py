@@ -29,6 +29,8 @@ from ._index_sets import (
 )
 
 if TYPE_CHECKING:
+    import pandas as pd
+
     from ._misc_types import MinimalRepresentationPrinter
 
 ParamT = TypeVar('ParamT', bound=int | float)
@@ -447,6 +449,149 @@ class ParamDict1D(ParamDictBase[Elem1DT, ParamT], Dict1DMixin[Elem1DT, ParamT]):
         """
         return super().get(key, 0)
 
+    @classmethod
+    def from_series(
+        cls,
+        series: pd.Series[ParamT],
+        *,
+        key_name: str | None = None,
+        value_name: str | None = None,
+    ) -> ParamDict1D[Any, ParamT]:
+        """Create a ParamDict1D from a pandas Series.
+
+        Parameters
+        ----------
+        series : Series
+            Input pandas Series whose index labels form keys and values form parameters.
+        key_name : str, optional
+            Name for the parameter keys. If not provided, defaults to the Series' `index.name`
+            (as str) if set, or None.
+        value_name : str, optional
+            Name for the parameter values. If not provided, defaults to the Series' `name`
+            (as str) if set, or None.
+
+        Returns
+        -------
+        ParamDict1D
+
+        Raises
+        ------
+        ValueError
+            If the Series is empty.
+        ValueError
+            If the Series index contains duplicate labels.
+        TypeError
+            If the Series has a MultiIndex (multi-level index).
+        TypeError
+            If the Series index contains non-scalar labels (any iterable except string).
+        TypeError
+            If the Series values are not int or float.
+
+        See Also
+        --------
+        ParamDict1D.from_dataframe : Create a ParamDict1D from DataFrame columns.
+        ParamDictND.from_series : Create a ParamDictND from a MultiIndex Series.
+        ParamDictND.from_dataframe : Create a ParamDictND from DataFrame columns.
+
+        Examples
+        --------
+        >>> import pandas as pd
+        >>> from opti_extensions import ParamDict1D
+        >>> s = pd.Series(
+        ...     [200, 500], index=pd.Index(['chair', 'desk'], name='PRODUCT'), name='UNITS'
+        ... )
+        >>> ParamDict1D.from_series(s)
+        ParamDict1D: PRODUCT -> UNITS
+        {'chair': 200, 'desk': 500}
+        >>> ParamDict1D.from_series(s, key_name='ITEM', value_name='QTY')
+        ParamDict1D: ITEM -> QTY
+        {'chair': 200, 'desk': 500}
+        """
+        if series.empty:
+            raise ValueError(f'{series.__class__.__name__} is empty')
+        if getattr(series.index, 'nlevels', 1) > 1:
+            raise TypeError(
+                'MultiIndex is not supported by ParamDict1D; use ParamDictND.from_series'
+            )
+        if series.index.size > len(set(series.index)):
+            raise ValueError(f'{series.__class__.__name__} has duplicate index-label(s)')
+        if key_name is None and series.index.name is not None:
+            key_name = str(series.index.name)
+        if value_name is None and series.name is not None:
+            value_name = str(series.name)
+        return cls(series.to_dict(), key_name=key_name, value_name=value_name)
+
+    @classmethod
+    def from_dataframe(
+        cls,
+        df: pd.DataFrame,
+        *,
+        key_col: str,
+        value_col: str,
+        key_name: str | None = None,
+        value_name: str | None = None,
+    ) -> ParamDict1D[Any, int | float]:
+        """Create a ParamDict1D from two columns of a pandas DataFrame.
+
+        Parameters
+        ----------
+        df : DataFrame
+            Input pandas DataFrame.
+        key_col : str
+            Name of column to use for parameter keys.
+        value_col : str
+            Name of column to use for parameter values.
+        key_name : str, optional
+            Name for the parameter keys. If not provided, defaults to `key_col`.
+        value_name : str, optional
+            Name for the parameter values. If not provided, defaults to `value_col`.
+
+        Returns
+        -------
+        ParamDict1D
+
+        Raises
+        ------
+        ValueError
+            If the DataFrame is empty.
+        ValueError
+            If the `key_col` contains duplicate values.
+        KeyError
+            If `key_col` or `value_col` is not found in DataFrame columns.
+        TypeError
+            If `key_col` contains non-scalar values (any iterable except string).
+        TypeError
+            If `value_col` contains values that are not int or float.
+
+        See Also
+        --------
+        ParamDict1D.from_series : Create a ParamDict1D from a pandas Series.
+        ParamDictND.from_dataframe : Create a ParamDictND from DataFrame columns.
+        ParamDictND.from_series : Create a ParamDictND from a MultiIndex Series.
+
+        Examples
+        --------
+        >>> import pandas as pd
+        >>> from opti_extensions import ParamDict1D
+        >>> df = pd.DataFrame({'PRODUCT': ['chair', 'desk'], 'UNITS': [200, 500]})
+        >>> ParamDict1D.from_dataframe(df, key_col='PRODUCT', value_col='UNITS')
+        ParamDict1D: PRODUCT -> UNITS
+        {'chair': 200, 'desk': 500}
+        >>> ParamDict1D.from_dataframe(
+        ...     df, key_col='PRODUCT', value_col='UNITS', key_name='ITEM', value_name='QTY'
+        ... )
+        ParamDict1D: ITEM -> QTY
+        {'chair': 200, 'desk': 500}
+        """
+        if df.empty:
+            raise ValueError(f'{df.__class__.__name__} is empty')
+        s = df.set_index(key_col, drop=False)[value_col]
+        k_name = key_name if key_name is not None else str(key_col)
+        v_name = value_name if value_name is not None else str(value_col)
+        return cast(
+            'ParamDict1D[Any, int | float]', cls.from_series(s, key_name=k_name, value_name=v_name)
+        )
+
     def _calc_stat(self, stat_func: str) -> int | float:
         """Calculate a statistic with all parameter values.
 
@@ -752,6 +897,176 @@ class ParamDictND(ParamDictBase[ElemNDT, ParamT], DictNDMixin[ElemNDT, ParamT]):
         if len(key) != self._indexset._tuplelen:
             raise ValueError('lookup key length must be the same as that of N-dim tuple keys')
         return self.get(key, 0)
+
+    @classmethod
+    def from_series(
+        cls,
+        series: pd.Series[ParamT],
+        *,
+        key_names: Sequence[str] | None = None,
+        value_name: str | None = None,
+    ) -> ParamDictND[tuple[Any, ...], ParamT]:
+        """Create a ParamDictND from a MultiIndex pandas Series.
+
+        Parameters
+        ----------
+        series : Series
+            Input pandas Series with a MultiIndex whose tuples form keys and values form parameters.
+        key_names : sequence of str, optional
+            Dimension names for the parameter keys. If not provided, defaults to the Series'
+            `index.names` (as strings) if set, or None.
+        value_name : str, optional
+            Name for the parameter values. If not provided, defaults to the Series' `name`
+            (as str) if set, or None.
+
+        Returns
+        -------
+        ParamDictND
+
+        Raises
+        ------
+        ValueError
+            If the Series is empty.
+        ValueError
+            If the Series index contains duplicate labels.
+        TypeError
+            If the Series does not have a MultiIndex (multi-level index).
+        TypeError
+            If the Series index contains non-scalar labels (any iterable except string).
+        TypeError
+            If the Series values are not int or float.
+
+        See Also
+        --------
+        ParamDictND.from_dataframe : Create a ParamDictND from DataFrame columns.
+        ParamDict1D.from_series : Create a ParamDict1D from a single-index Series.
+        ParamDict1D.from_dataframe : Create a ParamDict1D from DataFrame columns.
+
+        Examples
+        --------
+        >>> import pandas as pd
+        >>> from opti_extensions import ParamDictND
+        >>> mi = pd.MultiIndex.from_tuples(
+        ...     [('Delhi', 'Seattle'), ('Delhi', 'Tokyo')],
+        ...     names=['ORI', 'DES'],
+        ... )
+        >>> s = pd.Series([11303, 5836], index=mi, name='DIST')
+        >>> ParamDictND.from_series(s)
+        ParamDictND: (ORI, DES) -> DIST
+        {('Delhi', 'Seattle'): 11303, ('Delhi', 'Tokyo'): 5836}
+        >>> ParamDictND.from_series(s, key_names=['ORIGIN', 'DEST'], value_name='MILES')
+        ParamDictND: (ORIGIN, DEST) -> MILES
+        {('Delhi', 'Seattle'): 11303, ('Delhi', 'Tokyo'): 5836}
+        """
+        if series.empty:
+            raise ValueError(f'{series.__class__.__name__} is empty')
+        if getattr(series.index, 'nlevels', 1) <= 1:
+            raise TypeError(
+                'Single-level index is not supported by ParamDictND; use ParamDict1D.from_series'
+            )
+        if series.index.size > len(set(series.index)):
+            raise ValueError(f'{series.__class__.__name__} has duplicate index-label(s)')
+        if key_names is None:
+            key_names = (
+                None
+                if any(x is None for x in series.index.names)
+                else list(map(str, series.index.names))
+            )
+        if value_name is None and series.name is not None:
+            value_name = str(series.name)
+        return cls(
+            cast(Mapping[tuple[Any, ...], ParamT], series.to_dict()),
+            key_names=key_names,
+            value_name=value_name,
+        )
+
+    @classmethod
+    def from_dataframe(
+        cls,
+        df: pd.DataFrame,
+        *,
+        key_cols: Sequence[str],
+        value_col: str,
+        key_names: Sequence[str] | None = None,
+        value_name: str | None = None,
+    ) -> ParamDictND[tuple[Any, ...], int | float]:
+        """Create a ParamDictND from key columns and a value column of a pandas DataFrame.
+
+        Parameters
+        ----------
+        df : DataFrame
+            Input pandas DataFrame.
+        key_cols : sequence of str
+            Names of columns to use for parameter key tuples.
+        value_col : str
+            Name of column to use for parameter values.
+        key_names : sequence of str, optional
+            Dimension names for the parameter keys. If not provided, defaults to `key_cols`.
+        value_name : str, optional
+            Name for the parameter values. If not provided, defaults to `value_col`.
+
+        Returns
+        -------
+        ParamDictND
+
+        Raises
+        ------
+        ValueError
+            If the DataFrame is empty.
+        ValueError
+            If the combination of `key_cols` contains duplicate rows.
+        KeyError
+            If any column in `key_cols` or `value_col` is not found in DataFrame columns.
+        TypeError
+            If any column in `key_cols` contains non-scalar values (any iterable except string).
+        TypeError
+            If `value_col` contains values that are not int or float.
+
+        See Also
+        --------
+        ParamDictND.from_series : Create a ParamDictND from a MultiIndex Series.
+        ParamDict1D.from_dataframe : Create a ParamDict1D from DataFrame columns.
+        ParamDict1D.from_series : Create a ParamDict1D from a pandas Series.
+
+        Examples
+        --------
+        >>> import pandas as pd
+        >>> from opti_extensions import ParamDictND
+        >>> df = pd.DataFrame(
+        ...     {
+        ...         'ORI': ['Delhi', 'Seattle'],
+        ...         'DES': ['Seattle', 'Tokyo'],
+        ...         'DIST': [11303, 7695],
+        ...     }
+        ... )
+        >>> ParamDictND.from_dataframe(df, key_cols=['ORI', 'DES'], value_col='DIST')
+        ParamDictND: (ORI, DES) -> DIST
+        {('Delhi', 'Seattle'): 11303, ('Seattle', 'Tokyo'): 7695}
+        >>> ParamDictND.from_dataframe(
+        ...     df,
+        ...     key_cols=['ORI', 'DES'],
+        ...     value_col='DIST',
+        ...     key_names=['ORIGIN', 'DEST'],
+        ...     value_name='MILES',
+        ... )
+        ParamDictND: (ORIGIN, DEST) -> MILES
+        {('Delhi', 'Seattle'): 11303, ('Seattle', 'Tokyo'): 7695}
+        """
+        if df.empty:
+            raise ValueError(f'{df.__class__.__name__} is empty')
+        cols = list(key_cols)
+        if len(cols) < 2:
+            raise ValueError(
+                '`key_cols` should contain at least two column names for ParamDictND; '
+                'use ParamDict1D.from_dataframe for a single key column'
+            )
+        s = df.set_index(cols, drop=False)[value_col]
+        k_names = key_names if key_names is not None else list(map(str, cols))
+        v_name = value_name if value_name is not None else str(value_col)
+        return cast(
+            'ParamDictND[tuple[Any, ...], int | float]',
+            cls.from_series(s, key_names=k_names, value_name=v_name),
+        )
 
     def _calc_stat(self, *pattern: Any, stat_func: str) -> int | float:
         """Calculate a statistic with all parameter values or a subset based on wildcard pattern.
