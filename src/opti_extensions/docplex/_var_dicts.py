@@ -7,16 +7,28 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
-from typing import TYPE_CHECKING, Any, Literal, TypeVar, cast
+from typing import TYPE_CHECKING, Any, Literal, TypeVar, overload
 
 from docplex.mp.dvar import Var
 from docplex.mp.linear import LinearExpr, ZeroExpr
 from docplex.mp.model import Model
 from docplex.mp.quad import QuadExpr
 from docplex.mp.vartype import VarType
+from typing_extensions import Never, TypeVarTuple, Unpack, deprecated
 
 from .._dict_mixins import Dict1DMixin, DictNDMixin
-from .._index_sets import Elem1DT, ElemNDT, ElemT, IndexSet1D, IndexSetBase, IndexSetND
+from .._index_sets import (
+    _S1,
+    _S2,
+    _S3,
+    _S4,
+    Elem1DT,
+    ElemNDT,
+    ElemT,
+    IndexSet1D,
+    IndexSetBase,
+    IndexSetND,
+)
 from .._param_dicts import ParamDict1D, ParamDictND, ParamT
 from .._var_dict_base import VarDictBase, _validate_for_dot_1d, _validate_for_dot_Nd
 
@@ -24,6 +36,7 @@ if TYPE_CHECKING:
     from .._misc_types import MinimalRepresentationPrinter
 
 VarT = TypeVar('VarT', bound=Var)
+Ts = TypeVarTuple('Ts')
 
 
 class VarDictCore(VarDictBase[ElemT, VarT]):
@@ -98,7 +111,7 @@ class VarDictCore(VarDictBase[ElemT, VarT]):
             raise TypeError('dict values should be docplex.mp.dvar.Var objects')
 
 
-class VarDict1D(VarDictCore[Elem1DT, VarT], Dict1DMixin[Elem1DT, VarT]):
+class VarDict1D(VarDictCore[Elem1DT, VarT], Dict1DMixin[Elem1DT, VarT]):  # numpydoc ignore=PR02
     """Custom subclasses of `dict` to define DOcplex model variables with 1-dim scalar keys.
 
     Parameters
@@ -122,21 +135,29 @@ class VarDict1D(VarDictCore[Elem1DT, VarT], Dict1DMixin[Elem1DT, VarT]):
 
     __slots__ = ('_key_name', '_value_name')
 
-    def __init__(
-        self,
-        docpx_var_dict: dict[Elem1DT, VarT],
-        indexset: IndexSet1D[Elem1DT],
-        /,
-        *,
-        model: Model,
-        vartype: VarType,
-        value_name: str | None = None,
-    ) -> None:
-        self.key_name = indexset.name
-        self.value_name = value_name
+    @overload
+    @deprecated(
+        'This class is not meant to be instantiated; VarDict1D is built through the '
+        'opti_extensions.docplex.add_variables function',
+        category=None,
+    )
+    def __new__(cls, __disallow: Never) -> VarDict1D[Elem1DT, VarT]: ...  # numpydoc ignore=GL08
 
-        super().__init__(docpx_var_dict, indexset=indexset, model=model, vartype=vartype)
+    @overload
+    @deprecated(
+        'This class is not meant to be instantiated; VarDict1D is built through the '
+        'opti_extensions.docplex.add_variables function',
+        category=None,
+    )
+    def __new__(
+        cls, __d1: Never, __d2: Never, *args: Never, **kwargs: Never
+    ) -> VarDict1D[Elem1DT, VarT]: ...  # numpydoc ignore=GL08
 
+    @deprecated(  # type: ignore[misc]
+        'This class is not meant to be instantiated; VarDict1D is built through the '
+        'opti_extensions.docplex.add_variables function',
+        category=None,
+    )
     def __new__(
         cls,
         docpx_var_dict: dict[Elem1DT, VarT],
@@ -165,8 +186,10 @@ class VarDict1D(VarDictCore[Elem1DT, VarT], Dict1DMixin[Elem1DT, VarT]):
     ) -> VarDict1D[Elem1DT, VarT]:
         # Private method to construct VarDict1D
         instance = super().__new__(cls)
-        cls.__init__(
-            instance, docpx_var_dict, indexset, model=model, vartype=vartype, value_name=value_name
+        instance.key_name = indexset.name
+        instance.value_name = value_name
+        VarDictCore.__init__(
+            instance, docpx_var_dict, indexset=indexset, model=model, vartype=vartype
         )
         return instance
 
@@ -347,7 +370,7 @@ class VarDict1D(VarDictCore[Elem1DT, VarT], Dict1DMixin[Elem1DT, VarT]):
     __rmatmul__ = dot
 
 
-class VarDictND(VarDictCore[ElemNDT, VarT], DictNDMixin[ElemNDT, VarT]):
+class VarDictND(VarDictCore[ElemNDT, VarT], DictNDMixin[ElemNDT, VarT]):  # numpydoc ignore=PR02
     """Custom subclasses of `dict` to define DOcplex model variables with N-dim tuple keys.
 
     Parameters
@@ -371,21 +394,29 @@ class VarDictND(VarDictCore[ElemNDT, VarT], DictNDMixin[ElemNDT, VarT]):
 
     __slots__ = ('_key_names', '_value_name')
 
-    def __init__(
-        self,
-        docpx_var_dict: dict[ElemNDT, VarT],
-        indexset: IndexSetND[ElemNDT],
-        /,
-        *,
-        model: Model,
-        vartype: VarType,
-        value_name: str | None = None,
-    ) -> None:
-        self.key_names = indexset.names
-        self.value_name = value_name
+    @overload
+    @deprecated(
+        'This class is not meant to be instantiated; VarDictND is built through the '
+        'opti_extensions.docplex.add_variables function',
+        category=None,
+    )
+    def __new__(cls, __disallow: Never) -> VarDictND[ElemNDT, VarT]: ...  # numpydoc ignore=GL08
 
-        super().__init__(docpx_var_dict, indexset=indexset, model=model, vartype=vartype)
+    @overload
+    @deprecated(
+        'This class is not meant to be instantiated; VarDictND is built through the '
+        'opti_extensions.docplex.add_variables function',
+        category=None,
+    )
+    def __new__(
+        cls, __d1: Never, __d2: Never, *args: Never, **kwargs: Never
+    ) -> VarDictND[ElemNDT, VarT]: ...  # numpydoc ignore=GL08
 
+    @deprecated(  # type: ignore[misc]
+        'This class is not meant to be instantiated; VarDictND is built through the '
+        'opti_extensions.docplex.add_variables function',
+        category=None,
+    )
     def __new__(
         cls,
         docpx_var_dict: dict[ElemNDT, VarT],
@@ -414,8 +445,10 @@ class VarDictND(VarDictCore[ElemNDT, VarT], DictNDMixin[ElemNDT, VarT]):
     ) -> VarDictND[ElemNDT, VarT]:
         # Private method to construct VarDictND
         instance = super().__new__(cls)
-        cls.__init__(
-            instance, docpx_var_dict, indexset, model=model, vartype=vartype, value_name=value_name
+        instance.key_names = indexset.names
+        instance.value_name = value_name
+        VarDictCore.__init__(
+            instance, docpx_var_dict, indexset=indexset, model=model, vartype=vartype
         )
         return instance
 
@@ -429,7 +462,7 @@ class VarDictND(VarDictCore[ElemNDT, VarT], DictNDMixin[ElemNDT, VarT]):
         p.text(f'{self._get_repr_header()}\n')
         p.pretty(dict(self))
 
-    def lookup(self, *key: Any) -> VarT | Literal[0]:
+    def lookup(self: VarDictND[tuple[Unpack[Ts]], VarT], *key: Unpack[Ts]) -> VarT | Literal[0]:
         """Get the variable for the specified key, or zero if it is not found.
 
         Parameters
@@ -468,7 +501,206 @@ class VarDictND(VarDictCore[ElemNDT, VarT], DictNDMixin[ElemNDT, VarT]):
             raise TypeError('lookup key must be scalars (no iterables except string)')
         if len(key) != self._indexset._tuplelen:
             raise ValueError('lookup key length must be the same as that of N-dim tuple keys')
-        return super().get(cast('ElemNDT', key), 0)
+        return self.get(key, 0)
+
+    # ---- sum overloads ----
+    @overload
+    def sum(self) -> LinearExpr | ZeroExpr: ...  # numpydoc ignore=GL08
+
+    @overload
+    def sum(  # numpydoc ignore=GL08
+        self: VarDictND[tuple[_S1, _S2], VarT], __d1: _S1, __d2: Literal['*']
+    ) -> LinearExpr | ZeroExpr: ...
+
+    @overload
+    def sum(  # numpydoc ignore=GL08
+        self: VarDictND[tuple[_S1, _S2], VarT], __d1: Literal['*'], __d2: _S2
+    ) -> LinearExpr | ZeroExpr: ...
+
+    @overload
+    def sum(  # numpydoc ignore=GL08
+        self: VarDictND[tuple[_S1, _S2, _S3], VarT],
+        __d1: _S1,
+        __d2: Literal['*'],
+        __d3: Literal['*'],
+    ) -> LinearExpr | ZeroExpr: ...
+
+    @overload
+    def sum(  # numpydoc ignore=GL08
+        self: VarDictND[tuple[_S1, _S2, _S3], VarT],
+        __d1: Literal['*'],
+        __d2: _S2,
+        __d3: Literal['*'],
+    ) -> LinearExpr | ZeroExpr: ...
+
+    @overload
+    def sum(  # numpydoc ignore=GL08
+        self: VarDictND[tuple[_S1, _S2, _S3], VarT],
+        __d1: Literal['*'],
+        __d2: Literal['*'],
+        __d3: _S3,
+    ) -> LinearExpr | ZeroExpr: ...
+
+    @overload
+    def sum(  # numpydoc ignore=GL08
+        self: VarDictND[tuple[_S1, _S2, _S3], VarT],
+        __d1: _S1,
+        __d2: _S2,
+        __d3: Literal['*'],
+    ) -> LinearExpr | ZeroExpr: ...
+
+    @overload
+    def sum(  # numpydoc ignore=GL08
+        self: VarDictND[tuple[_S1, _S2, _S3], VarT],
+        __d1: _S1,
+        __d2: Literal['*'],
+        __d3: _S3,
+    ) -> LinearExpr | ZeroExpr: ...
+
+    @overload
+    def sum(  # numpydoc ignore=GL08
+        self: VarDictND[tuple[_S1, _S2, _S3], VarT],
+        __d1: Literal['*'],
+        __d2: _S2,
+        __d3: _S3,
+    ) -> LinearExpr | ZeroExpr: ...
+
+    @overload
+    def sum(  # numpydoc ignore=GL08
+        self: VarDictND[tuple[_S1, _S2, _S3, _S4], VarT],
+        __d1: _S1,
+        __d2: Literal['*'],
+        __d3: Literal['*'],
+        __d4: Literal['*'],
+    ) -> LinearExpr | ZeroExpr: ...
+
+    @overload
+    def sum(  # numpydoc ignore=GL08
+        self: VarDictND[tuple[_S1, _S2, _S3, _S4], VarT],
+        __d1: Literal['*'],
+        __d2: _S2,
+        __d3: Literal['*'],
+        __d4: Literal['*'],
+    ) -> LinearExpr | ZeroExpr: ...
+
+    @overload
+    def sum(  # numpydoc ignore=GL08
+        self: VarDictND[tuple[_S1, _S2, _S3, _S4], VarT],
+        __d1: Literal['*'],
+        __d2: Literal['*'],
+        __d3: _S3,
+        __d4: Literal['*'],
+    ) -> LinearExpr | ZeroExpr: ...
+
+    @overload
+    def sum(  # numpydoc ignore=GL08
+        self: VarDictND[tuple[_S1, _S2, _S3, _S4], VarT],
+        __d1: Literal['*'],
+        __d2: Literal['*'],
+        __d3: Literal['*'],
+        __d4: _S4,
+    ) -> LinearExpr | ZeroExpr: ...
+
+    @overload
+    def sum(  # numpydoc ignore=GL08
+        self: VarDictND[tuple[_S1, _S2, _S3, _S4], VarT],
+        __d1: _S1,
+        __d2: _S2,
+        __d3: Literal['*'],
+        __d4: Literal['*'],
+    ) -> LinearExpr | ZeroExpr: ...
+
+    @overload
+    def sum(  # numpydoc ignore=GL08
+        self: VarDictND[tuple[_S1, _S2, _S3, _S4], VarT],
+        __d1: _S1,
+        __d2: Literal['*'],
+        __d3: _S3,
+        __d4: Literal['*'],
+    ) -> LinearExpr | ZeroExpr: ...
+
+    @overload
+    def sum(  # numpydoc ignore=GL08
+        self: VarDictND[tuple[_S1, _S2, _S3, _S4], VarT],
+        __d1: _S1,
+        __d2: Literal['*'],
+        __d3: Literal['*'],
+        __d4: _S4,
+    ) -> LinearExpr | ZeroExpr: ...
+
+    @overload
+    def sum(  # numpydoc ignore=GL08
+        self: VarDictND[tuple[_S1, _S2, _S3, _S4], VarT],
+        __d1: Literal['*'],
+        __d2: _S2,
+        __d3: _S3,
+        __d4: Literal['*'],
+    ) -> LinearExpr | ZeroExpr: ...
+
+    @overload
+    def sum(  # numpydoc ignore=GL08
+        self: VarDictND[tuple[_S1, _S2, _S3, _S4], VarT],
+        __d1: Literal['*'],
+        __d2: _S2,
+        __d3: Literal['*'],
+        __d4: _S4,
+    ) -> LinearExpr | ZeroExpr: ...
+
+    @overload
+    def sum(  # numpydoc ignore=GL08
+        self: VarDictND[tuple[_S1, _S2, _S3, _S4], VarT],
+        __d1: Literal['*'],
+        __d2: Literal['*'],
+        __d3: _S3,
+        __d4: _S4,
+    ) -> LinearExpr | ZeroExpr: ...
+
+    @overload
+    def sum(  # numpydoc ignore=GL08
+        self: VarDictND[tuple[_S1, _S2, _S3, _S4], VarT],
+        __d1: _S1,
+        __d2: _S2,
+        __d3: _S3,
+        __d4: Literal['*'],
+    ) -> LinearExpr | ZeroExpr: ...
+
+    @overload
+    def sum(  # numpydoc ignore=GL08
+        self: VarDictND[tuple[_S1, _S2, _S3, _S4], VarT],
+        __d1: _S1,
+        __d2: _S2,
+        __d3: Literal['*'],
+        __d4: _S4,
+    ) -> LinearExpr | ZeroExpr: ...
+
+    @overload
+    def sum(  # numpydoc ignore=GL08
+        self: VarDictND[tuple[_S1, _S2, _S3, _S4], VarT],
+        __d1: _S1,
+        __d2: Literal['*'],
+        __d3: _S3,
+        __d4: _S4,
+    ) -> LinearExpr | ZeroExpr: ...
+
+    @overload
+    def sum(  # numpydoc ignore=GL08
+        self: VarDictND[tuple[_S1, _S2, _S3, _S4], VarT],
+        __d1: Literal['*'],
+        __d2: _S2,
+        __d3: _S3,
+        __d4: _S4,
+    ) -> LinearExpr | ZeroExpr: ...
+
+    @overload
+    def sum(  # numpydoc ignore=GL08
+        self,
+        __d1: Any,
+        __d2: Any,
+        __d3: Any,
+        __d4: Any,
+        __d5: Any,
+        *pattern: Any,
+    ) -> LinearExpr | ZeroExpr: ...
 
     def sum(self, *pattern: Any) -> LinearExpr | ZeroExpr:
         """Sum all variables, or a subset based on wildcard pattern, in an expression.
@@ -527,6 +759,205 @@ class VarDictND(VarDictCore[ElemNDT, VarT], DictNDMixin[ElemNDT, VarT]):
         if pattern:
             return self.model.sum_vars_all_different(self.subset_values(*pattern))
         return self.model.sum_vars_all_different(self.values())
+
+    # ---- sum_squares overloads ----
+    @overload
+    def sum_squares(self) -> QuadExpr | ZeroExpr: ...  # numpydoc ignore=GL08
+
+    @overload
+    def sum_squares(  # numpydoc ignore=GL08
+        self: VarDictND[tuple[_S1, _S2], VarT], __d1: _S1, __d2: Literal['*']
+    ) -> QuadExpr | ZeroExpr: ...
+
+    @overload
+    def sum_squares(  # numpydoc ignore=GL08
+        self: VarDictND[tuple[_S1, _S2], VarT], __d1: Literal['*'], __d2: _S2
+    ) -> QuadExpr | ZeroExpr: ...
+
+    @overload
+    def sum_squares(  # numpydoc ignore=GL08
+        self: VarDictND[tuple[_S1, _S2, _S3], VarT],
+        __d1: _S1,
+        __d2: Literal['*'],
+        __d3: Literal['*'],
+    ) -> QuadExpr | ZeroExpr: ...
+
+    @overload
+    def sum_squares(  # numpydoc ignore=GL08
+        self: VarDictND[tuple[_S1, _S2, _S3], VarT],
+        __d1: Literal['*'],
+        __d2: _S2,
+        __d3: Literal['*'],
+    ) -> QuadExpr | ZeroExpr: ...
+
+    @overload
+    def sum_squares(  # numpydoc ignore=GL08
+        self: VarDictND[tuple[_S1, _S2, _S3], VarT],
+        __d1: Literal['*'],
+        __d2: Literal['*'],
+        __d3: _S3,
+    ) -> QuadExpr | ZeroExpr: ...
+
+    @overload
+    def sum_squares(  # numpydoc ignore=GL08
+        self: VarDictND[tuple[_S1, _S2, _S3], VarT],
+        __d1: _S1,
+        __d2: _S2,
+        __d3: Literal['*'],
+    ) -> QuadExpr | ZeroExpr: ...
+
+    @overload
+    def sum_squares(  # numpydoc ignore=GL08
+        self: VarDictND[tuple[_S1, _S2, _S3], VarT],
+        __d1: _S1,
+        __d2: Literal['*'],
+        __d3: _S3,
+    ) -> QuadExpr | ZeroExpr: ...
+
+    @overload
+    def sum_squares(  # numpydoc ignore=GL08
+        self: VarDictND[tuple[_S1, _S2, _S3], VarT],
+        __d1: Literal['*'],
+        __d2: _S2,
+        __d3: _S3,
+    ) -> QuadExpr | ZeroExpr: ...
+
+    @overload
+    def sum_squares(  # numpydoc ignore=GL08
+        self: VarDictND[tuple[_S1, _S2, _S3, _S4], VarT],
+        __d1: _S1,
+        __d2: Literal['*'],
+        __d3: Literal['*'],
+        __d4: Literal['*'],
+    ) -> QuadExpr | ZeroExpr: ...
+
+    @overload
+    def sum_squares(  # numpydoc ignore=GL08
+        self: VarDictND[tuple[_S1, _S2, _S3, _S4], VarT],
+        __d1: Literal['*'],
+        __d2: _S2,
+        __d3: Literal['*'],
+        __d4: Literal['*'],
+    ) -> QuadExpr | ZeroExpr: ...
+
+    @overload
+    def sum_squares(  # numpydoc ignore=GL08
+        self: VarDictND[tuple[_S1, _S2, _S3, _S4], VarT],
+        __d1: Literal['*'],
+        __d2: Literal['*'],
+        __d3: _S3,
+        __d4: Literal['*'],
+    ) -> QuadExpr | ZeroExpr: ...
+
+    @overload
+    def sum_squares(  # numpydoc ignore=GL08
+        self: VarDictND[tuple[_S1, _S2, _S3, _S4], VarT],
+        __d1: Literal['*'],
+        __d2: Literal['*'],
+        __d3: Literal['*'],
+        __d4: _S4,
+    ) -> QuadExpr | ZeroExpr: ...
+
+    @overload
+    def sum_squares(  # numpydoc ignore=GL08
+        self: VarDictND[tuple[_S1, _S2, _S3, _S4], VarT],
+        __d1: _S1,
+        __d2: _S2,
+        __d3: Literal['*'],
+        __d4: Literal['*'],
+    ) -> QuadExpr | ZeroExpr: ...
+
+    @overload
+    def sum_squares(  # numpydoc ignore=GL08
+        self: VarDictND[tuple[_S1, _S2, _S3, _S4], VarT],
+        __d1: _S1,
+        __d2: Literal['*'],
+        __d3: _S3,
+        __d4: Literal['*'],
+    ) -> QuadExpr | ZeroExpr: ...
+
+    @overload
+    def sum_squares(  # numpydoc ignore=GL08
+        self: VarDictND[tuple[_S1, _S2, _S3, _S4], VarT],
+        __d1: _S1,
+        __d2: Literal['*'],
+        __d3: Literal['*'],
+        __d4: _S4,
+    ) -> QuadExpr | ZeroExpr: ...
+
+    @overload
+    def sum_squares(  # numpydoc ignore=GL08
+        self: VarDictND[tuple[_S1, _S2, _S3, _S4], VarT],
+        __d1: Literal['*'],
+        __d2: _S2,
+        __d3: _S3,
+        __d4: Literal['*'],
+    ) -> QuadExpr | ZeroExpr: ...
+
+    @overload
+    def sum_squares(  # numpydoc ignore=GL08
+        self: VarDictND[tuple[_S1, _S2, _S3, _S4], VarT],
+        __d1: Literal['*'],
+        __d2: _S2,
+        __d3: Literal['*'],
+        __d4: _S4,
+    ) -> QuadExpr | ZeroExpr: ...
+
+    @overload
+    def sum_squares(  # numpydoc ignore=GL08
+        self: VarDictND[tuple[_S1, _S2, _S3, _S4], VarT],
+        __d1: Literal['*'],
+        __d2: Literal['*'],
+        __d3: _S3,
+        __d4: _S4,
+    ) -> QuadExpr | ZeroExpr: ...
+
+    @overload
+    def sum_squares(  # numpydoc ignore=GL08
+        self: VarDictND[tuple[_S1, _S2, _S3, _S4], VarT],
+        __d1: _S1,
+        __d2: _S2,
+        __d3: _S3,
+        __d4: Literal['*'],
+    ) -> QuadExpr | ZeroExpr: ...
+
+    @overload
+    def sum_squares(  # numpydoc ignore=GL08
+        self: VarDictND[tuple[_S1, _S2, _S3, _S4], VarT],
+        __d1: _S1,
+        __d2: _S2,
+        __d3: Literal['*'],
+        __d4: _S4,
+    ) -> QuadExpr | ZeroExpr: ...
+
+    @overload
+    def sum_squares(  # numpydoc ignore=GL08
+        self: VarDictND[tuple[_S1, _S2, _S3, _S4], VarT],
+        __d1: _S1,
+        __d2: Literal['*'],
+        __d3: _S3,
+        __d4: _S4,
+    ) -> QuadExpr | ZeroExpr: ...
+
+    @overload
+    def sum_squares(  # numpydoc ignore=GL08
+        self: VarDictND[tuple[_S1, _S2, _S3, _S4], VarT],
+        __d1: Literal['*'],
+        __d2: _S2,
+        __d3: _S3,
+        __d4: _S4,
+    ) -> QuadExpr | ZeroExpr: ...
+
+    @overload
+    def sum_squares(  # numpydoc ignore=GL08
+        self,
+        __d1: Any,
+        __d2: Any,
+        __d3: Any,
+        __d4: Any,
+        __d5: Any,
+        *pattern: Any,
+    ) -> QuadExpr | ZeroExpr: ...
 
     def sum_squares(self, *pattern: Any) -> QuadExpr | ZeroExpr:
         """Sum squares of all variables, or a subset based on wildcard pattern, in an expression.

@@ -7,14 +7,26 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
-from typing import TYPE_CHECKING, Any, Literal, NoReturn, TypeVar, cast
+from typing import TYPE_CHECKING, Any, Literal, TypeVar, overload
 
 from highspy import Highs as HighsModel
 from highspy import HighsVarType
 from highspy.highs import highs_linear_expression, highs_var
+from typing_extensions import Never, TypeVarTuple, Unpack, deprecated
 
 from .._dict_mixins import Dict1DMixin, DictNDMixin
-from .._index_sets import Elem1DT, ElemNDT, ElemT, IndexSet1D, IndexSetBase, IndexSetND
+from .._index_sets import (
+    _S1,
+    _S2,
+    _S3,
+    _S4,
+    Elem1DT,
+    ElemNDT,
+    ElemT,
+    IndexSet1D,
+    IndexSetBase,
+    IndexSetND,
+)
 from .._param_dicts import ParamDict1D, ParamDictND, ParamT
 from .._var_dict_base import VarDictBase, _validate_for_dot_1d, _validate_for_dot_Nd
 
@@ -22,6 +34,7 @@ if TYPE_CHECKING:
     from .._misc_types import MinimalRepresentationPrinter
 
 VarT = TypeVar('VarT', bound=highs_var)
+Ts = TypeVarTuple('Ts')
 
 
 class VarDictCore(VarDictBase[ElemT, VarT]):
@@ -97,7 +110,7 @@ class VarDictCore(VarDictBase[ElemT, VarT]):
             raise TypeError('dict values should be highspy.highs_var objects')
 
 
-class VarDict1D(VarDictCore[Elem1DT, VarT], Dict1DMixin[Elem1DT, VarT]):
+class VarDict1D(VarDictCore[Elem1DT, VarT], Dict1DMixin[Elem1DT, VarT]):  # numpydoc ignore=PR02
     """Custom subclasses of `dict` to define highspy model variables with 1-dim scalar keys.
 
     Parameters
@@ -122,21 +135,29 @@ class VarDict1D(VarDictCore[Elem1DT, VarT], Dict1DMixin[Elem1DT, VarT]):
 
     __slots__ = ('_key_name', '_value_name')
 
-    def __init__(
-        self,
-        highs_var_dict: dict[Elem1DT, VarT],
-        indexset: IndexSet1D[Elem1DT],
-        /,
-        *,
-        model: HighsModel,
-        type: HighsVarType,
-        value_name: str | None = None,
-    ) -> None:
-        self.key_name = indexset.name
-        self.value_name = value_name
+    @overload
+    @deprecated(
+        'This class is not meant to be instantiated; VarDict1D is built through the '
+        'opti_extensions.highspy.addVariables function',
+        category=None,
+    )
+    def __new__(cls, __disallow: Never) -> VarDict1D[Elem1DT, VarT]: ...  # numpydoc ignore=GL08
 
-        super().__init__(highs_var_dict, indexset=indexset, model=model, type=type)
+    @overload
+    @deprecated(
+        'This class is not meant to be instantiated; VarDict1D is built through the '
+        'opti_extensions.highspy.addVariables function',
+        category=None,
+    )
+    def __new__(
+        cls, __d1: Never, __d2: Never, *args: Never, **kwargs: Never
+    ) -> VarDict1D[Elem1DT, VarT]: ...  # numpydoc ignore=GL08
 
+    @deprecated(  # type: ignore[misc]
+        'This class is not meant to be instantiated; VarDict1D is built through the '
+        'opti_extensions.highspy.addVariables function',
+        category=None,
+    )
     def __new__(
         cls,
         highs_var_dict: dict[Elem1DT, VarT],
@@ -165,9 +186,9 @@ class VarDict1D(VarDictCore[Elem1DT, VarT], Dict1DMixin[Elem1DT, VarT]):
     ) -> VarDict1D[Elem1DT, VarT]:
         # Private method to construct VarDict1D
         instance = super().__new__(cls)
-        cls.__init__(
-            instance, highs_var_dict, indexset, model=model, type=type, value_name=value_name
-        )
+        instance.key_name = indexset.name
+        instance.value_name = value_name
+        VarDictCore.__init__(instance, highs_var_dict, indexset=indexset, model=model, type=type)
         return instance
 
     def __repr__(self) -> str:
@@ -251,7 +272,18 @@ class VarDict1D(VarDictCore[Elem1DT, VarT], Dict1DMixin[Elem1DT, VarT]):
         """
         return self.Highs.qsum(self.values())
 
-    def sum_squares(self) -> NoReturn:
+    @overload
+    @deprecated('`sum_squares` is not implemented for highspy.', category=None)
+    def sum_squares(self, __disallow: Never) -> None: ...  # numpydoc ignore=GL08
+
+    @overload
+    @deprecated('`sum_squares` is not implemented for highspy.', category=None)
+    def sum_squares(
+        self, __d1: Never, __d2: Never, *args: Never
+    ) -> None: ...  # numpydoc ignore=GL08
+
+    @deprecated('`sum_squares` is not implemented for highspy.', category=None)
+    def sum_squares(self, *args: Any, **kwargs: Any) -> None:  # numpydoc ignore=PR01
         """Sum squares of variables in an expression.
 
         Raises
@@ -336,7 +368,7 @@ class VarDict1D(VarDictCore[Elem1DT, VarT], Dict1DMixin[Elem1DT, VarT]):
     __rmatmul__ = dot
 
 
-class VarDictND(VarDictCore[ElemNDT, VarT], DictNDMixin[ElemNDT, VarT]):
+class VarDictND(VarDictCore[ElemNDT, VarT], DictNDMixin[ElemNDT, VarT]):  # numpydoc ignore=PR02
     """Custom subclasses of `dict` to define highspy model variables with N-dim tuple keys.
 
     Parameters
@@ -361,21 +393,29 @@ class VarDictND(VarDictCore[ElemNDT, VarT], DictNDMixin[ElemNDT, VarT]):
 
     __slots__ = ('_key_names', '_value_name')
 
-    def __init__(
-        self,
-        highs_var_dict: dict[ElemNDT, VarT],
-        indexset: IndexSetND[ElemNDT],
-        /,
-        *,
-        model: HighsModel,
-        type: HighsVarType,
-        value_name: str | None = None,
-    ) -> None:
-        self.key_names = indexset.names
-        self.value_name = value_name
+    @overload
+    @deprecated(
+        'This class is not meant to be instantiated; VarDictND is built through the '
+        'opti_extensions.highspy.addVariables function',
+        category=None,
+    )
+    def __new__(cls, __disallow: Never) -> VarDictND[ElemNDT, VarT]: ...  # numpydoc ignore=GL08
 
-        super().__init__(highs_var_dict, indexset=indexset, model=model, type=type)
+    @overload
+    @deprecated(
+        'This class is not meant to be instantiated; VarDictND is built through the '
+        'opti_extensions.highspy.addVariables function',
+        category=None,
+    )
+    def __new__(
+        cls, __d1: Never, __d2: Never, *args: Never, **kwargs: Never
+    ) -> VarDictND[ElemNDT, VarT]: ...  # numpydoc ignore=GL08
 
+    @deprecated(  # type: ignore[misc]
+        'This class is not meant to be instantiated; VarDictND is built through the '
+        'opti_extensions.highspy.addVariables function',
+        category=None,
+    )
     def __new__(
         cls,
         highs_var_dict: dict[ElemNDT, VarT],
@@ -404,9 +444,9 @@ class VarDictND(VarDictCore[ElemNDT, VarT], DictNDMixin[ElemNDT, VarT]):
     ) -> VarDictND[ElemNDT, VarT]:
         # Private method to construct VarDictND
         instance = super().__new__(cls)
-        cls.__init__(
-            instance, highs_var_dict, indexset, model=model, type=type, value_name=value_name
-        )
+        instance.key_names = indexset.names
+        instance.value_name = value_name
+        VarDictCore.__init__(instance, highs_var_dict, indexset=indexset, model=model, type=type)
         return instance
 
     def __repr__(self) -> str:
@@ -419,7 +459,7 @@ class VarDictND(VarDictCore[ElemNDT, VarT], DictNDMixin[ElemNDT, VarT]):
         p.text(f'{self._get_repr_header()}\n')
         p.pretty(dict(self))
 
-    def lookup(self, *key: Any) -> VarT | Literal[0]:
+    def lookup(self: VarDictND[tuple[Unpack[Ts]], VarT], *key: Unpack[Ts]) -> VarT | Literal[0]:
         """Get the variable for the specified key, or zero if it is not found.
 
         Parameters
@@ -460,7 +500,206 @@ class VarDictND(VarDictCore[ElemNDT, VarT], DictNDMixin[ElemNDT, VarT]):
             raise TypeError('lookup key must be scalars (no iterables except string)')
         if len(key) != self._indexset._tuplelen:
             raise ValueError('lookup key length must be the same as that of N-dim tuple keys')
-        return super().get(cast('ElemNDT', key), 0)
+        return self.get(key, 0)
+
+    # ---- sum overloads ----
+    @overload
+    def sum(self) -> highs_linear_expression: ...  # numpydoc ignore=GL08
+
+    @overload
+    def sum(  # numpydoc ignore=GL08
+        self: VarDictND[tuple[_S1, _S2], VarT], __d1: _S1, __d2: Literal['*']
+    ) -> highs_linear_expression: ...
+
+    @overload
+    def sum(  # numpydoc ignore=GL08
+        self: VarDictND[tuple[_S1, _S2], VarT], __d1: Literal['*'], __d2: _S2
+    ) -> highs_linear_expression: ...
+
+    @overload
+    def sum(  # numpydoc ignore=GL08
+        self: VarDictND[tuple[_S1, _S2, _S3], VarT],
+        __d1: _S1,
+        __d2: Literal['*'],
+        __d3: Literal['*'],
+    ) -> highs_linear_expression: ...
+
+    @overload
+    def sum(  # numpydoc ignore=GL08
+        self: VarDictND[tuple[_S1, _S2, _S3], VarT],
+        __d1: Literal['*'],
+        __d2: _S2,
+        __d3: Literal['*'],
+    ) -> highs_linear_expression: ...
+
+    @overload
+    def sum(  # numpydoc ignore=GL08
+        self: VarDictND[tuple[_S1, _S2, _S3], VarT],
+        __d1: Literal['*'],
+        __d2: Literal['*'],
+        __d3: _S3,
+    ) -> highs_linear_expression: ...
+
+    @overload
+    def sum(  # numpydoc ignore=GL08
+        self: VarDictND[tuple[_S1, _S2, _S3], VarT],
+        __d1: _S1,
+        __d2: _S2,
+        __d3: Literal['*'],
+    ) -> highs_linear_expression: ...
+
+    @overload
+    def sum(  # numpydoc ignore=GL08
+        self: VarDictND[tuple[_S1, _S2, _S3], VarT],
+        __d1: _S1,
+        __d2: Literal['*'],
+        __d3: _S3,
+    ) -> highs_linear_expression: ...
+
+    @overload
+    def sum(  # numpydoc ignore=GL08
+        self: VarDictND[tuple[_S1, _S2, _S3], VarT],
+        __d1: Literal['*'],
+        __d2: _S2,
+        __d3: _S3,
+    ) -> highs_linear_expression: ...
+
+    @overload
+    def sum(  # numpydoc ignore=GL08
+        self: VarDictND[tuple[_S1, _S2, _S3, _S4], VarT],
+        __d1: _S1,
+        __d2: Literal['*'],
+        __d3: Literal['*'],
+        __d4: Literal['*'],
+    ) -> highs_linear_expression: ...
+
+    @overload
+    def sum(  # numpydoc ignore=GL08
+        self: VarDictND[tuple[_S1, _S2, _S3, _S4], VarT],
+        __d1: Literal['*'],
+        __d2: _S2,
+        __d3: Literal['*'],
+        __d4: Literal['*'],
+    ) -> highs_linear_expression: ...
+
+    @overload
+    def sum(  # numpydoc ignore=GL08
+        self: VarDictND[tuple[_S1, _S2, _S3, _S4], VarT],
+        __d1: Literal['*'],
+        __d2: Literal['*'],
+        __d3: _S3,
+        __d4: Literal['*'],
+    ) -> highs_linear_expression: ...
+
+    @overload
+    def sum(  # numpydoc ignore=GL08
+        self: VarDictND[tuple[_S1, _S2, _S3, _S4], VarT],
+        __d1: Literal['*'],
+        __d2: Literal['*'],
+        __d3: Literal['*'],
+        __d4: _S4,
+    ) -> highs_linear_expression: ...
+
+    @overload
+    def sum(  # numpydoc ignore=GL08
+        self: VarDictND[tuple[_S1, _S2, _S3, _S4], VarT],
+        __d1: _S1,
+        __d2: _S2,
+        __d3: Literal['*'],
+        __d4: Literal['*'],
+    ) -> highs_linear_expression: ...
+
+    @overload
+    def sum(  # numpydoc ignore=GL08
+        self: VarDictND[tuple[_S1, _S2, _S3, _S4], VarT],
+        __d1: _S1,
+        __d2: Literal['*'],
+        __d3: _S3,
+        __d4: Literal['*'],
+    ) -> highs_linear_expression: ...
+
+    @overload
+    def sum(  # numpydoc ignore=GL08
+        self: VarDictND[tuple[_S1, _S2, _S3, _S4], VarT],
+        __d1: _S1,
+        __d2: Literal['*'],
+        __d3: Literal['*'],
+        __d4: _S4,
+    ) -> highs_linear_expression: ...
+
+    @overload
+    def sum(  # numpydoc ignore=GL08
+        self: VarDictND[tuple[_S1, _S2, _S3, _S4], VarT],
+        __d1: Literal['*'],
+        __d2: _S2,
+        __d3: _S3,
+        __d4: Literal['*'],
+    ) -> highs_linear_expression: ...
+
+    @overload
+    def sum(  # numpydoc ignore=GL08
+        self: VarDictND[tuple[_S1, _S2, _S3, _S4], VarT],
+        __d1: Literal['*'],
+        __d2: _S2,
+        __d3: Literal['*'],
+        __d4: _S4,
+    ) -> highs_linear_expression: ...
+
+    @overload
+    def sum(  # numpydoc ignore=GL08
+        self: VarDictND[tuple[_S1, _S2, _S3, _S4], VarT],
+        __d1: Literal['*'],
+        __d2: Literal['*'],
+        __d3: _S3,
+        __d4: _S4,
+    ) -> highs_linear_expression: ...
+
+    @overload
+    def sum(  # numpydoc ignore=GL08
+        self: VarDictND[tuple[_S1, _S2, _S3, _S4], VarT],
+        __d1: _S1,
+        __d2: _S2,
+        __d3: _S3,
+        __d4: Literal['*'],
+    ) -> highs_linear_expression: ...
+
+    @overload
+    def sum(  # numpydoc ignore=GL08
+        self: VarDictND[tuple[_S1, _S2, _S3, _S4], VarT],
+        __d1: _S1,
+        __d2: _S2,
+        __d3: Literal['*'],
+        __d4: _S4,
+    ) -> highs_linear_expression: ...
+
+    @overload
+    def sum(  # numpydoc ignore=GL08
+        self: VarDictND[tuple[_S1, _S2, _S3, _S4], VarT],
+        __d1: _S1,
+        __d2: Literal['*'],
+        __d3: _S3,
+        __d4: _S4,
+    ) -> highs_linear_expression: ...
+
+    @overload
+    def sum(  # numpydoc ignore=GL08
+        self: VarDictND[tuple[_S1, _S2, _S3, _S4], VarT],
+        __d1: Literal['*'],
+        __d2: _S2,
+        __d3: _S3,
+        __d4: _S4,
+    ) -> highs_linear_expression: ...
+
+    @overload
+    def sum(  # numpydoc ignore=GL08
+        self,
+        __d1: Any,
+        __d2: Any,
+        __d3: Any,
+        __d4: Any,
+        __d5: Any,
+        *pattern: Any,
+    ) -> highs_linear_expression: ...
 
     def sum(self, *pattern: Any) -> highs_linear_expression:
         """Sum all variables, or a subset based on wildcard pattern, in an expression.
@@ -524,7 +763,18 @@ class VarDictND(VarDictCore[ElemNDT, VarT], DictNDMixin[ElemNDT, VarT]):
         res: highs_linear_expression = self.Highs.qsum(self.values())
         return res
 
-    def sum_squares(self, *pattern: Any) -> NoReturn:
+    @overload
+    @deprecated('`sum_squares` is not implemented for highspy.', category=None)
+    def sum_squares(self, __disallow: Never) -> None: ...  # numpydoc ignore=GL08
+
+    @overload
+    @deprecated('`sum_squares` is not implemented for highspy.', category=None)
+    def sum_squares(
+        self, __d1: Never, __d2: Never, *args: Never
+    ) -> None: ...  # numpydoc ignore=GL08
+
+    @deprecated('`sum_squares` is not implemented for highspy.', category=None)
+    def sum_squares(self, *pattern: Any) -> None:
         """Sum squares of variables, or a subset based on wildcard pattern, in an expression.
 
         Parameters

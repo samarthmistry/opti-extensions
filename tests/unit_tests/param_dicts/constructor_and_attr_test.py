@@ -5,6 +5,7 @@
 """ParamDict1D & ParamDictND constructor and attributes."""
 
 from collections import abc
+from types import MappingProxyType
 
 import pytest
 
@@ -17,16 +18,19 @@ from opti_extensions import ParamDict1D, ParamDictND
         (ParamDict1D, {}),
         (ParamDict1D, {'A': 0, 'B': 1, 'C': 2}),
         (ParamDict1D, {1: 0, 2: 1.0, 3: 2.1}),
+        (ParamDict1D, MappingProxyType({})),
+        (ParamDict1D, MappingProxyType({'A': 0, 'B': 1, 'C': 2})),
         (ParamDictND, {}),
         (ParamDictND, {('A', 'B'): 0, ('C', 'D'): 1, ('E', 'F'): 2}),
         (ParamDictND, {(0, 'B'): 0, (1, 'D'): 1.0, (2, 'F'): 1.5}),
+        (ParamDictND, MappingProxyType({})),
+        (ParamDictND, MappingProxyType({('A', 'B'): 0, ('C', 'D'): 1, ('E', 'F'): 2})),
     ],
 )
 def test_paramdict_init_pass(cls, input):
     # ParamDict is supposed to be a subclass of dict, so test for equality at init
-    if input:
-        assert cls(input) == input
-    else:
+    assert cls(input) == input
+    if not input:
         assert cls() == input
 
 

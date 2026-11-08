@@ -222,3 +222,22 @@ def test_paramdict_update_attrerr(request, _input, other):
 def test_paramdict_fromkeys_attrerr(cls, iterable):
     with pytest.raises(AttributeError):
         cls.fromkeys(iterable)
+
+
+@pytest.mark.parametrize(
+    '_input',
+    ['paramdict1d_emp', 'paramdict1d_pop3', 'paramdictNd_emp', 'paramdictNd_pop3'],
+)
+@pytest.mark.parametrize('other', [{}, {'Y': 8, 'Z': 9}])
+def test_paramdict_or_typeerr(request, _input, other):
+    input = request.getfixturevalue(_input)
+    with pytest.raises(TypeError):
+        _ = input | other
+    with pytest.raises(TypeError):
+        _ = other | input
+    with pytest.raises(TypeError):
+        _ = input | input
+    with pytest.raises(TypeError):
+        input |= other
+    with pytest.raises(TypeError):
+        input |= input

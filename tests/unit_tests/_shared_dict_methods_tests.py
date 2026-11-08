@@ -47,3 +47,19 @@ def test_vardict_get_pass(model, add_vars_fn, add_vars_kwargs, indexset, key, de
         assert value is v[key]
     else:
         assert value == default
+
+
+@pytest.mark.parametrize('indexset', [IndexSet1D(['A', 'B', 'C']), IndexSetND(range(2), range(2))])
+@pytest.mark.parametrize('other', [{}, {'Z': 1}])
+def test_vardict_or_typeerr(model, add_vars_fn, add_vars_kwargs, indexset, other):
+    v = make_vardict(model, add_vars_fn, indexset, add_vars_kwargs)
+    with pytest.raises(TypeError):
+        _ = v | other
+    with pytest.raises(TypeError):
+        _ = other | v
+    with pytest.raises(TypeError):
+        _ = v | v
+    with pytest.raises(TypeError):
+        v |= other
+    with pytest.raises(TypeError):
+        v |= v

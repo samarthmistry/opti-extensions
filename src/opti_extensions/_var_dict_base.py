@@ -6,7 +6,9 @@
 
 from __future__ import annotations
 
-from typing import Any, NoReturn, TypeVar, overload
+from typing import Any, TypeVar, overload
+
+from typing_extensions import Never, Self, deprecated
 
 from ._dict_mixins import DefaultT, DictBaseMixin
 from ._index_sets import Elem1DT, ElemNDT, ElemT, IndexSetBase, IndexSetND
@@ -93,19 +95,63 @@ class VarDictBase(dict[ElemT, VarT], DictBaseMixin[ElemT, VarT]):
 
         super().__init__(var_dict)
 
-    def __setitem__(self, *args: Any) -> NoReturn:
+    @overload  # type: ignore[override]
+    @deprecated('`__setitem__` is not supported by VarDict.', category=None)
+    def __setitem__(self, __k: Never, __v: Never, /) -> None: ...  # numpydoc ignore=GL08
+
+    @overload
+    @deprecated('`__setitem__` is not supported by VarDict.', category=None)
+    def __setitem__(
+        self, __d1: Never, __d2: Never, *args: Never, **kwargs: Never
+    ) -> None: ...  # numpydoc ignore=GL08
+
+    @deprecated('`__setitem__` is not supported by VarDict.', category=None)
+    def __setitem__(self, *args: Any, **kwargs: Any) -> None:
         """Not supported by VarDict."""
         self._raise_not_supported_err('__setitem__')
 
-    def __delitem__(self, *args: Any) -> NoReturn:
+    @overload  # type: ignore[override]
+    @deprecated('`__delitem__` is not supported by VarDict.', category=None)
+    def __delitem__(self, __k: Never, /) -> None: ...  # numpydoc ignore=GL08
+
+    @overload
+    @deprecated('`__delitem__` is not supported by VarDict.', category=None)
+    def __delitem__(
+        self, __d1: Never, __d2: Never, *args: Never, **kwargs: Never
+    ) -> None: ...  # numpydoc ignore=GL08
+
+    @deprecated('`__delitem__` is not supported by VarDict.', category=None)
+    def __delitem__(self, *args: Any, **kwargs: Any) -> None:
         """Not supported by VarDict."""
         self._raise_not_supported_err('__delitem__')
 
-    def clear(self) -> NoReturn:
+    @overload  # type: ignore[override]
+    @deprecated('`clear` is not supported by VarDict.', category=None)
+    def clear(self, __disallow: Never) -> None: ...  # numpydoc ignore=GL08
+
+    @overload
+    @deprecated('`clear` is not supported by VarDict.', category=None)
+    def clear(
+        self, __d1: Never, __d2: Never, *args: Never, **kwargs: Never
+    ) -> None: ...  # numpydoc ignore=GL08
+
+    @deprecated('`clear` is not supported by VarDict.', category=None)
+    def clear(self, *args: Any, **kwargs: Any) -> None:
         """Not supported by VarDict."""
         self._raise_not_supported_err('clear')
 
-    def copy(self) -> NoReturn:
+    @overload  # type: ignore[override]
+    @deprecated('`copy` is not supported by VarDict.', category=None)
+    def copy(self, __disallow: Never) -> None: ...  # numpydoc ignore=GL08
+
+    @overload
+    @deprecated('`copy` is not supported by VarDict.', category=None)
+    def copy(
+        self, __d1: Never, __d2: Never, *args: Never, **kwargs: Never
+    ) -> None: ...  # numpydoc ignore=GL08
+
+    @deprecated('`copy` is not supported by VarDict.', category=None)
+    def copy(self, *args: Any, **kwargs: Any) -> None:
         """Not supported by VarDict."""
         self._raise_not_supported_err('copy')
 
@@ -134,23 +180,92 @@ class VarDictBase(dict[ElemT, VarT], DictBaseMixin[ElemT, VarT]):
         """
         return super().get(key, default)
 
-    def pop(self, *args: Any) -> NoReturn:
+    @overload  # type: ignore[override]
+    @deprecated('`pop` is not supported by VarDict.', category=None)
+    def pop(self, __disallow: Never) -> None: ...  # numpydoc ignore=GL08
+
+    @overload
+    @deprecated('`pop` is not supported by VarDict.', category=None)
+    def pop(
+        self, __d1: Never, __d2: Never, *args: Never, **kwargs: Never
+    ) -> None: ...  # numpydoc ignore=GL08
+
+    @deprecated('`pop` is not supported by VarDict.', category=None)
+    def pop(self, *args: Any, **kwargs: Any) -> None:
         """Not supported by VarDict."""
         self._raise_not_supported_err('pop')
 
-    def popitem(self) -> NoReturn:
+    @overload  # type: ignore[override]
+    @deprecated('`popitem` is not supported by VarDict.', category=None)
+    def popitem(self, __disallow: Never) -> None: ...  # numpydoc ignore=GL08
+
+    @overload
+    @deprecated('`popitem` is not supported by VarDict.', category=None)
+    def popitem(
+        self, __d1: Never, __d2: Never, *args: Never, **kwargs: Never
+    ) -> None: ...  # numpydoc ignore=GL08
+
+    @deprecated('`popitem` is not supported by VarDict.', category=None)
+    def popitem(self, *args: Any, **kwargs: Any) -> None:
         """Not supported by VarDict."""
         self._raise_not_supported_err('popitem')
 
-    def setdefault(self, *args: Any) -> NoReturn:
+    @overload  # type: ignore[override]
+    @deprecated('`setdefault` is not supported by VarDict.', category=None)
+    def setdefault(self, __disallow: Never) -> None: ...  # numpydoc ignore=GL08
+
+    @overload
+    @deprecated('`setdefault` is not supported by VarDict.', category=None)
+    def setdefault(
+        self, __d1: Never, __d2: Never, *args: Never, **kwargs: Never
+    ) -> None: ...  # numpydoc ignore=GL08
+
+    @deprecated('`setdefault` is not supported by VarDict.', category=None)
+    def setdefault(self, *args: Any, **kwargs: Any) -> None:
         """Not supported by VarDict."""
         self._raise_not_supported_err('setdefault')
 
-    def update(self, *args: Any, **kwargs: Any) -> NoReturn:
+    @overload  # type: ignore[override]
+    @deprecated('`update` is not supported by VarDict.', category=None)
+    def update(self, __disallow: Never) -> None: ...  # numpydoc ignore=GL08
+
+    @overload
+    @deprecated('`update` is not supported by VarDict.', category=None)
+    def update(
+        self, __d1: Never, __d2: Never, *args: Never, **kwargs: Never
+    ) -> None: ...  # numpydoc ignore=GL08
+
+    @deprecated('`update` is not supported by VarDict.', category=None)
+    def update(self, *args: Any, **kwargs: Any) -> None:
         """Not supported by VarDict."""
         self._raise_not_supported_err('update')
 
+    @overload  # type: ignore[override]
     @classmethod
-    def fromkeys(cls, *args: Any) -> NoReturn:
+    @deprecated('`fromkeys` is not supported by VarDict.', category=None)
+    def fromkeys(cls, __disallow: Never) -> None: ...  # numpydoc ignore=GL08
+
+    @overload
+    @classmethod
+    @deprecated('`fromkeys` is not supported by VarDict.', category=None)
+    def fromkeys(
+        cls, __d1: Never, __d2: Never, *args: Never, **kwargs: Never
+    ) -> None: ...  # numpydoc ignore=GL08
+
+    @classmethod
+    @deprecated('`fromkeys` is not supported by VarDict.', category=None)
+    def fromkeys(cls, *args: Any, **kwargs: Any) -> None:
         """Not supported by VarDict."""
         raise AttributeError(f'`fromkeys` is not supported by {cls.__name__}')
+
+    @deprecated('`|` is not supported by VarDict.', category=None)
+    def __or__(self, other: Never, /) -> Self:  # type: ignore[override]
+        raise TypeError(f'`|` is not supported by {self.__class__.__name__}')
+
+    @deprecated('`|` is not supported by VarDict.', category=None)
+    def __ror__(self, other: Never, /) -> Self:  # type: ignore[override]
+        raise TypeError(f'`|` is not supported by {self.__class__.__name__}')
+
+    @deprecated('`|=` is not supported by VarDict.', category=None)
+    def __ior__(self, other: Never, /) -> Self:  # type: ignore[override]
+        raise TypeError(f'`|=` is not supported by {self.__class__.__name__}')

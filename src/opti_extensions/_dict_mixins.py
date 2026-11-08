@@ -9,9 +9,19 @@ from __future__ import annotations
 from collections import abc
 from collections.abc import Sequence
 from operator import itemgetter
-from typing import Any, Generic, Literal, NoReturn, Protocol, TypeVar
+from typing import Any, Generic, Literal, NoReturn, Protocol, TypeVar, overload
 
-from ._index_sets import Elem1DT, ElemNDT, ElemT, IndexSetBase, IndexSetND
+from ._index_sets import (
+    _S1,
+    _S2,
+    _S3,
+    _S4,
+    Elem1DT,
+    ElemNDT,
+    ElemT,
+    IndexSetBase,
+    IndexSetND,
+)
 
 _KT_contra = TypeVar('_KT_contra', contravariant=True)
 _VT_co = TypeVar('_VT_co', covariant=True)
@@ -172,7 +182,206 @@ class DictNDMixin(DictBaseMixin[ElemNDT, ValT], SupportsGetItem[ElemNDT, ValT]):
         else:
             return f'{self.__class__.__name__}:'
 
-    def subset_keys(self, *pattern: Any) -> list[ElemNDT]:
+    # 2D subset_keys overloads
+    @overload
+    def subset_keys(  # numpydoc ignore=GL08
+        self: DictNDMixin[tuple[_S1, _S2], ValT], __d1: _S1, __d2: Literal['*']
+    ) -> list[tuple[_S1, _S2]]: ...
+
+    @overload
+    def subset_keys(  # numpydoc ignore=GL08
+        self: DictNDMixin[tuple[_S1, _S2], ValT], __d1: Literal['*'], __d2: _S2
+    ) -> list[tuple[_S1, _S2]]: ...
+
+    # 3D subset_keys overloads
+    @overload
+    def subset_keys(  # numpydoc ignore=GL08
+        self: DictNDMixin[tuple[_S1, _S2, _S3], ValT],
+        __d1: _S1,
+        __d2: Literal['*'],
+        __d3: Literal['*'],
+    ) -> list[tuple[_S1, _S2, _S3]]: ...
+
+    @overload
+    def subset_keys(  # numpydoc ignore=GL08
+        self: DictNDMixin[tuple[_S1, _S2, _S3], ValT],
+        __d1: Literal['*'],
+        __d2: _S2,
+        __d3: Literal['*'],
+    ) -> list[tuple[_S1, _S2, _S3]]: ...
+
+    @overload
+    def subset_keys(  # numpydoc ignore=GL08
+        self: DictNDMixin[tuple[_S1, _S2, _S3], ValT],
+        __d1: Literal['*'],
+        __d2: Literal['*'],
+        __d3: _S3,
+    ) -> list[tuple[_S1, _S2, _S3]]: ...
+
+    @overload
+    def subset_keys(  # numpydoc ignore=GL08
+        self: DictNDMixin[tuple[_S1, _S2, _S3], ValT],
+        __d1: _S1,
+        __d2: _S2,
+        __d3: Literal['*'],
+    ) -> list[tuple[_S1, _S2, _S3]]: ...
+
+    @overload
+    def subset_keys(  # numpydoc ignore=GL08
+        self: DictNDMixin[tuple[_S1, _S2, _S3], ValT],
+        __d1: _S1,
+        __d2: Literal['*'],
+        __d3: _S3,
+    ) -> list[tuple[_S1, _S2, _S3]]: ...
+
+    @overload
+    def subset_keys(  # numpydoc ignore=GL08
+        self: DictNDMixin[tuple[_S1, _S2, _S3], ValT],
+        __d1: Literal['*'],
+        __d2: _S2,
+        __d3: _S3,
+    ) -> list[tuple[_S1, _S2, _S3]]: ...
+
+    # 4D subset_keys overloads
+    @overload
+    def subset_keys(  # numpydoc ignore=GL08
+        self: DictNDMixin[tuple[_S1, _S2, _S3, _S4], ValT],
+        __d1: _S1,
+        __d2: Literal['*'],
+        __d3: Literal['*'],
+        __d4: Literal['*'],
+    ) -> list[tuple[_S1, _S2, _S3, _S4]]: ...
+
+    @overload
+    def subset_keys(  # numpydoc ignore=GL08
+        self: DictNDMixin[tuple[_S1, _S2, _S3, _S4], ValT],
+        __d1: Literal['*'],
+        __d2: _S2,
+        __d3: Literal['*'],
+        __d4: Literal['*'],
+    ) -> list[tuple[_S1, _S2, _S3, _S4]]: ...
+
+    @overload
+    def subset_keys(  # numpydoc ignore=GL08
+        self: DictNDMixin[tuple[_S1, _S2, _S3, _S4], ValT],
+        __d1: Literal['*'],
+        __d2: Literal['*'],
+        __d3: _S3,
+        __d4: Literal['*'],
+    ) -> list[tuple[_S1, _S2, _S3, _S4]]: ...
+
+    @overload
+    def subset_keys(  # numpydoc ignore=GL08
+        self: DictNDMixin[tuple[_S1, _S2, _S3, _S4], ValT],
+        __d1: Literal['*'],
+        __d2: Literal['*'],
+        __d3: Literal['*'],
+        __d4: _S4,
+    ) -> list[tuple[_S1, _S2, _S3, _S4]]: ...
+
+    @overload
+    def subset_keys(  # numpydoc ignore=GL08
+        self: DictNDMixin[tuple[_S1, _S2, _S3, _S4], ValT],
+        __d1: _S1,
+        __d2: _S2,
+        __d3: Literal['*'],
+        __d4: Literal['*'],
+    ) -> list[tuple[_S1, _S2, _S3, _S4]]: ...
+
+    @overload
+    def subset_keys(  # numpydoc ignore=GL08
+        self: DictNDMixin[tuple[_S1, _S2, _S3, _S4], ValT],
+        __d1: _S1,
+        __d2: Literal['*'],
+        __d3: _S3,
+        __d4: Literal['*'],
+    ) -> list[tuple[_S1, _S2, _S3, _S4]]: ...
+
+    @overload
+    def subset_keys(  # numpydoc ignore=GL08
+        self: DictNDMixin[tuple[_S1, _S2, _S3, _S4], ValT],
+        __d1: _S1,
+        __d2: Literal['*'],
+        __d3: Literal['*'],
+        __d4: _S4,
+    ) -> list[tuple[_S1, _S2, _S3, _S4]]: ...
+
+    @overload
+    def subset_keys(  # numpydoc ignore=GL08
+        self: DictNDMixin[tuple[_S1, _S2, _S3, _S4], ValT],
+        __d1: Literal['*'],
+        __d2: _S2,
+        __d3: _S3,
+        __d4: Literal['*'],
+    ) -> list[tuple[_S1, _S2, _S3, _S4]]: ...
+
+    @overload
+    def subset_keys(  # numpydoc ignore=GL08
+        self: DictNDMixin[tuple[_S1, _S2, _S3, _S4], ValT],
+        __d1: Literal['*'],
+        __d2: _S2,
+        __d3: Literal['*'],
+        __d4: _S4,
+    ) -> list[tuple[_S1, _S2, _S3, _S4]]: ...
+
+    @overload
+    def subset_keys(  # numpydoc ignore=GL08
+        self: DictNDMixin[tuple[_S1, _S2, _S3, _S4], ValT],
+        __d1: Literal['*'],
+        __d2: Literal['*'],
+        __d3: _S3,
+        __d4: _S4,
+    ) -> list[tuple[_S1, _S2, _S3, _S4]]: ...
+
+    @overload
+    def subset_keys(  # numpydoc ignore=GL08
+        self: DictNDMixin[tuple[_S1, _S2, _S3, _S4], ValT],
+        __d1: _S1,
+        __d2: _S2,
+        __d3: _S3,
+        __d4: Literal['*'],
+    ) -> list[tuple[_S1, _S2, _S3, _S4]]: ...
+
+    @overload
+    def subset_keys(  # numpydoc ignore=GL08
+        self: DictNDMixin[tuple[_S1, _S2, _S3, _S4], ValT],
+        __d1: _S1,
+        __d2: _S2,
+        __d3: Literal['*'],
+        __d4: _S4,
+    ) -> list[tuple[_S1, _S2, _S3, _S4]]: ...
+
+    @overload
+    def subset_keys(  # numpydoc ignore=GL08
+        self: DictNDMixin[tuple[_S1, _S2, _S3, _S4], ValT],
+        __d1: _S1,
+        __d2: Literal['*'],
+        __d3: _S3,
+        __d4: _S4,
+    ) -> list[tuple[_S1, _S2, _S3, _S4]]: ...
+
+    @overload
+    def subset_keys(  # numpydoc ignore=GL08
+        self: DictNDMixin[tuple[_S1, _S2, _S3, _S4], ValT],
+        __d1: Literal['*'],
+        __d2: _S2,
+        __d3: _S3,
+        __d4: _S4,
+    ) -> list[tuple[_S1, _S2, _S3, _S4]]: ...
+
+    # 5D+ fallback
+    @overload
+    def subset_keys(  # numpydoc ignore=GL08
+        self,
+        __d1: Any,
+        __d2: Any,
+        __d3: Any,
+        __d4: Any,
+        __d5: Any,
+        *pattern: Any,
+    ) -> list[ElemNDT]: ...
+
+    def subset_keys(self, *pattern: Any) -> list[ElemNDT]:  # type: ignore[misc]
         """Get a subset of the N-dim tuple keys of the Dict with a wildcard pattern.
 
         Parameters
@@ -201,6 +410,205 @@ class DictNDMixin(DictBaseMixin[ElemNDT, ValT], SupportsGetItem[ElemNDT, ValT]):
             return self._indexset.subset(*pattern)
         except Exception as exc:
             self._reraise_exc_from_indexset(exc)
+
+    # 2D subset_values overloads
+    @overload
+    def subset_values(  # numpydoc ignore=GL08
+        self: DictNDMixin[tuple[_S1, _S2], ValT], __d1: _S1, __d2: Literal['*']
+    ) -> list[ValT]: ...
+
+    @overload
+    def subset_values(  # numpydoc ignore=GL08
+        self: DictNDMixin[tuple[_S1, _S2], ValT], __d1: Literal['*'], __d2: _S2
+    ) -> list[ValT]: ...
+
+    # 3D subset_values overloads
+    @overload
+    def subset_values(  # numpydoc ignore=GL08
+        self: DictNDMixin[tuple[_S1, _S2, _S3], ValT],
+        __d1: _S1,
+        __d2: Literal['*'],
+        __d3: Literal['*'],
+    ) -> list[ValT]: ...
+
+    @overload
+    def subset_values(  # numpydoc ignore=GL08
+        self: DictNDMixin[tuple[_S1, _S2, _S3], ValT],
+        __d1: Literal['*'],
+        __d2: _S2,
+        __d3: Literal['*'],
+    ) -> list[ValT]: ...
+
+    @overload
+    def subset_values(  # numpydoc ignore=GL08
+        self: DictNDMixin[tuple[_S1, _S2, _S3], ValT],
+        __d1: Literal['*'],
+        __d2: Literal['*'],
+        __d3: _S3,
+    ) -> list[ValT]: ...
+
+    @overload
+    def subset_values(  # numpydoc ignore=GL08
+        self: DictNDMixin[tuple[_S1, _S2, _S3], ValT],
+        __d1: _S1,
+        __d2: _S2,
+        __d3: Literal['*'],
+    ) -> list[ValT]: ...
+
+    @overload
+    def subset_values(  # numpydoc ignore=GL08
+        self: DictNDMixin[tuple[_S1, _S2, _S3], ValT],
+        __d1: _S1,
+        __d2: Literal['*'],
+        __d3: _S3,
+    ) -> list[ValT]: ...
+
+    @overload
+    def subset_values(  # numpydoc ignore=GL08
+        self: DictNDMixin[tuple[_S1, _S2, _S3], ValT],
+        __d1: Literal['*'],
+        __d2: _S2,
+        __d3: _S3,
+    ) -> list[ValT]: ...
+
+    # 4D subset_values overloads
+    @overload
+    def subset_values(  # numpydoc ignore=GL08
+        self: DictNDMixin[tuple[_S1, _S2, _S3, _S4], ValT],
+        __d1: _S1,
+        __d2: Literal['*'],
+        __d3: Literal['*'],
+        __d4: Literal['*'],
+    ) -> list[ValT]: ...
+
+    @overload
+    def subset_values(  # numpydoc ignore=GL08
+        self: DictNDMixin[tuple[_S1, _S2, _S3, _S4], ValT],
+        __d1: Literal['*'],
+        __d2: _S2,
+        __d3: Literal['*'],
+        __d4: Literal['*'],
+    ) -> list[ValT]: ...
+
+    @overload
+    def subset_values(  # numpydoc ignore=GL08
+        self: DictNDMixin[tuple[_S1, _S2, _S3, _S4], ValT],
+        __d1: Literal['*'],
+        __d2: Literal['*'],
+        __d3: _S3,
+        __d4: Literal['*'],
+    ) -> list[ValT]: ...
+
+    @overload
+    def subset_values(  # numpydoc ignore=GL08
+        self: DictNDMixin[tuple[_S1, _S2, _S3, _S4], ValT],
+        __d1: Literal['*'],
+        __d2: Literal['*'],
+        __d3: Literal['*'],
+        __d4: _S4,
+    ) -> list[ValT]: ...
+
+    @overload
+    def subset_values(  # numpydoc ignore=GL08
+        self: DictNDMixin[tuple[_S1, _S2, _S3, _S4], ValT],
+        __d1: _S1,
+        __d2: _S2,
+        __d3: Literal['*'],
+        __d4: Literal['*'],
+    ) -> list[ValT]: ...
+
+    @overload
+    def subset_values(  # numpydoc ignore=GL08
+        self: DictNDMixin[tuple[_S1, _S2, _S3, _S4], ValT],
+        __d1: _S1,
+        __d2: Literal['*'],
+        __d3: _S3,
+        __d4: Literal['*'],
+    ) -> list[ValT]: ...
+
+    @overload
+    def subset_values(  # numpydoc ignore=GL08
+        self: DictNDMixin[tuple[_S1, _S2, _S3, _S4], ValT],
+        __d1: _S1,
+        __d2: Literal['*'],
+        __d3: Literal['*'],
+        __d4: _S4,
+    ) -> list[ValT]: ...
+
+    @overload
+    def subset_values(  # numpydoc ignore=GL08
+        self: DictNDMixin[tuple[_S1, _S2, _S3, _S4], ValT],
+        __d1: Literal['*'],
+        __d2: _S2,
+        __d3: _S3,
+        __d4: Literal['*'],
+    ) -> list[ValT]: ...
+
+    @overload
+    def subset_values(  # numpydoc ignore=GL08
+        self: DictNDMixin[tuple[_S1, _S2, _S3, _S4], ValT],
+        __d1: Literal['*'],
+        __d2: _S2,
+        __d3: Literal['*'],
+        __d4: _S4,
+    ) -> list[ValT]: ...
+
+    @overload
+    def subset_values(  # numpydoc ignore=GL08
+        self: DictNDMixin[tuple[_S1, _S2, _S3, _S4], ValT],
+        __d1: Literal['*'],
+        __d2: Literal['*'],
+        __d3: _S3,
+        __d4: _S4,
+    ) -> list[ValT]: ...
+
+    @overload
+    def subset_values(  # numpydoc ignore=GL08
+        self: DictNDMixin[tuple[_S1, _S2, _S3, _S4], ValT],
+        __d1: _S1,
+        __d2: _S2,
+        __d3: _S3,
+        __d4: Literal['*'],
+    ) -> list[ValT]: ...
+
+    @overload
+    def subset_values(  # numpydoc ignore=GL08
+        self: DictNDMixin[tuple[_S1, _S2, _S3, _S4], ValT],
+        __d1: _S1,
+        __d2: _S2,
+        __d3: Literal['*'],
+        __d4: _S4,
+    ) -> list[ValT]: ...
+
+    @overload
+    def subset_values(  # numpydoc ignore=GL08
+        self: DictNDMixin[tuple[_S1, _S2, _S3, _S4], ValT],
+        __d1: _S1,
+        __d2: Literal['*'],
+        __d3: _S3,
+        __d4: _S4,
+    ) -> list[ValT]: ...
+
+    @overload
+    def subset_values(  # numpydoc ignore=GL08
+        self: DictNDMixin[tuple[_S1, _S2, _S3, _S4], ValT],
+        __d1: Literal['*'],
+        __d2: _S2,
+        __d3: _S3,
+        __d4: _S4,
+    ) -> list[ValT]: ...
+
+    # 5D+ fallback
+    @overload
+    def subset_values(  # numpydoc ignore=GL08
+        self,
+        __d1: Any,
+        __d2: Any,
+        __d3: Any,
+        __d4: Any,
+        __d5: Any,
+        *pattern: Any,
+    ) -> list[ValT]: ...
 
     def subset_values(self, *pattern: Any) -> list[ValT]:
         """Get Dict values for all keys that match the wildcard pattern.
