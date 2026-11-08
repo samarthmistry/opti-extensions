@@ -180,13 +180,15 @@ show_error_context = true
 pretty = true
 
 [[tool.mypy.overrides]]
-module = ["docplex.mp.*", "highspy.*"]
+module = ["docplex.mp.*"]
 ignore_missing_imports = true
 
-# xpress 9.9+ ships inline type stubs (py.typed + __init__.pyi) with incorrect
-# signatures (wrong return types, missing operators, etc). Skip to treat as Any.
+# xpress (9.9+) and highspy (1.15+) ship py.typed / stubs with invalid stub syntax,
+# missing annotations (e.g. untyped Highs.__init__), or incorrect/restrictive
+# signatures. Skip to treat as Any.
+
 [[tool.mypy.overrides]]
-module = ["xpress.*"]
+module = ["xpress", "xpress.*", "highspy", "highspy.*"]
 follow_imports = "skip"
 follow_imports_for_stubs = true
 ignore_missing_imports = true
