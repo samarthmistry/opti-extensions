@@ -17,7 +17,7 @@ Features
 * **Cross-solver compatibility**: Comprehensively tested with:
 
   * CPLEX versions: 20.1.0, 22.1.0, 22.1.1, 22.1.2, 22.2.0
-  * Gurobi versions: 12.0, 13.0
+  * Gurobi versions: 12.0, 13.0, 14.0
   * Xpress versions: 9.4, 9.5, 9.6, 9.7, 9.8, 9.9, 10.0
   * HiGHS versions: 1.11, 1.12, 1.13, 1.14, 1.15
 * **Easy access to additional CPLEX functionality**: Like `tuning tool <https://

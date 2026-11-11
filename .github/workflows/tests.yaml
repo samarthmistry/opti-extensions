@@ -84,7 +84,7 @@ jobs:
           - name: cplex
             envs: cpx2010,cpx2210,cpx2211,cpx2212,cpx2220
           - name: gurobi
-            envs: grb12,grb13
+            envs: grb12,grb13,grb14
           - name: xpress
             envs: xprs94,xprs95,xprs96,xprs97,xprs98,xprs99,xprs100
           - name: highs
